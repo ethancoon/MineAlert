@@ -1,6 +1,6 @@
 import random
 
-def handle_response(message) -> str:
+def handle_response(message: str) -> str:
     p_message = message.lower()
     
     if p_message == "!hello":
@@ -13,4 +13,6 @@ def handle_response(message) -> str:
         return "`This is a placeholder for help.`"
     
     if p_message == "!about":
-        return "`This is a placeholder for about`"
+        return "`This is a placeholder for about.`"
+
+    return "I didn\'t understand what you wrote. Try typing \"!help\""
