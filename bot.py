@@ -34,10 +34,11 @@ def run_discord_bot():
         channel = str(message.channel)
 
         print(f"{username} said '{user_message}' ({channel})")
-        if user_message[0] == "!":
+        if user_message[0] == "?":
             user_message = user_message[1:]
             await send_message(message, user_message, is_private = True)
-        else:
+        elif user_message[0] == "!":
+            user_message = user_message[1:]
             await send_message(message, user_message, is_private = False)
 
     client.run(TOKEN)
