@@ -1,6 +1,6 @@
 import random
 import json
-from query import query_basic_stats
+from query import query_basic_stats, query_advanced_stats
 
 def get_server_address():
     file = open("config.json")
@@ -27,7 +27,10 @@ def handle_response(message: str) -> str:
     if p_message == "about":
         return "`This is a placeholder for about.`"
     
-    if p_message == "server":
+    if p_message == "server" or p_message == "serverbasic":
         return query_basic_stats(get_server_address(), get_server_port())
+    
+    if p_message == "serveradvanced":
+        return query_advanced_stats(get_server_address(), get_server_port())
 
     return "I didn\'t understand what you wrote. Try typing \"!help\""
