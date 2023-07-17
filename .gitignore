@@ -1,5 +1,8 @@
-# Config files
+# JSON files
 *.json
 
-# Cache files
+# Byte-compiled / optimized / DLL files
 __pycache__/
+
+# Environments
+venv/
