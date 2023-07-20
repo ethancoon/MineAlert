@@ -3,6 +3,7 @@ import responses
 import json
 from discord.ext import commands
 
+# Calls the handle response function, which will then be sent to the user, publicly or privately
 async def send_message(message, user_message, is_private):
     try:
         response = responses.handle_response(user_message)
@@ -10,23 +11,28 @@ async def send_message(message, user_message, is_private):
     except Exception as e:
         print(e)
 
+# Getting the bot token from the config.json file
 def get_token():
     file = open("config.json")
     data = json.load(file)
     return data["token"]    
 
+# Permissions for the bot are given, and the different events in which the bot will activate are set.
 def run_discord_bot():
     TOKEN = get_token()
     intents = discord.Intents.default()  
     intents.message_content = True
     client = discord.Client(intents=intents)
 
+    # When the bot starts up, this message will be printed.
     @client.event
     async def on_ready():
         print(f"{client.user} is now running!")
     
+    # When the user sends a message, the bot will send a message back.
     @client.event
     async def on_message(message):
+        # Making sure the bot isn't trapped in a loop responding to itself
         if message.author == client.user:
             return
         username = str(message.author)
@@ -41,5 +47,6 @@ def run_discord_bot():
             user_message = user_message[1:]
             await send_message(message, user_message, is_private = False)
 
+    # The bot will activate using the given token
     client.run(TOKEN)
     
