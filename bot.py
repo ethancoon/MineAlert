@@ -7,9 +7,13 @@ from discord.ext import commands
 async def send_message(message, user_message, is_private):
     try:
         response = responses.handle_response(user_message)
+        # If the bot's response is private, the message will be DMed, with confirmation in public channel
         if is_private:
-            await message.channel.send("DM sent!")
             await message.author.send(response)
+            # If the message is not sent in a public channel, do not sent a confirmation of DM
+            if str(message.channel.type) != "private":
+                await message.channel.send("DM sent!")
+        # If the bot's response is not private, then the message will be sent in the public channel
         else: 
             await message.channel.send(response)
     except Exception as e:
