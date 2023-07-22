@@ -1,6 +1,7 @@
 import random
 import json
 from query import query_basic_stats, query_advanced_stats
+import discord
 
 # Opening the config.json to get the server address
 def get_server_address():
@@ -15,7 +16,7 @@ def get_server_port():
     return data["server-port"]   
 
 # The function that determines the appropriate response for a given command by the user
-def handle_response(message: str) -> str:
+async def handle_response(message: str) -> str:
     # Parsing the string to make sure the command can be interpreted
     p_message = message.lower()
     
@@ -35,7 +36,13 @@ def handle_response(message: str) -> str:
         return query_basic_stats(get_server_address(), get_server_port())
     
     if p_message == "serveradvanced":
-        return query_advanced_stats(get_server_address(), get_server_port())
+        stats = query_advanced_stats(get_server_address(), get_server_port())
+        embed = discord.Embed(
+            title = "Server Info",
+            description = f"Description: {stats['motd']} \nOnline: True \n Players: {stats['players']}",
+            color = discord.Color.dark_green()
+        )
+        return stats
 
     # If the user sends an invalid command, this message will be returned.
     return "I didn\'t understand what you wrote. Try typing \"!help\""
