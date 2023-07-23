@@ -4,7 +4,8 @@ import random
 # Third party imports
 import discord
 from discord.ext import commands
-from mctools import QUERYClient
+from mcipc.query import Client
+import requests
 # Local application imports
 
 
@@ -60,9 +61,24 @@ async def serverinfo(ctx):
     server_address = get_server_address()
     server_port = get_server_port()
     try:
-        # Using the query protocol to communicate with the server through the IP
-        query = QUERYClient(server_address, server_port, timeout = 10)
-        await ctx.send(query.get_full_stats())
+        # Using the query protocol to communicate with the server through the IP and port
+        with Client(server_address, int(server_port)) as client:
+            full_stats = client.stats(full=True)
+        # Turning the stats into a JSON-ish dictionary
+        full_stats = dict(full_stats)
+        # Creating an embed for Discord
+        embed = discord.Embed(
+            title = "Minecraft Server Info",
+            description = f"""
+            Description: {full_stats['host_name']} 
+            \nVersion: {full_stats['version']} 
+            \nOnline Players: {full_stats['players']}
+            \nMax Players: {full_stats['max_players']}
+            """,
+            color = discord.Color.dark_blue()
+        )
+        embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
+        await ctx.send(embed = embed)
     except Exception as e:
         print(e)
         await ctx.send("The server is offline or I am searching the wrong address :(")    
