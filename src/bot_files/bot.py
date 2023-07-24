@@ -41,7 +41,7 @@ async def seed(ctx):
 
 @bot.command()
 async def about(ctx):
-    await ctx.send("`This is a placeholder for about.`")
+    await ctx.send("`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me: https://github.com/ethancoon`")
 
 # Will return information on the Minecraft server
 @bot.command()
