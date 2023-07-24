@@ -40,10 +40,6 @@ async def seed(ctx):
     await ctx.send(str(random.randint(-9223372036854775808, 9223372036854775807)))
 
 @bot.command()
-async def mahelp(ctx):
-    await ctx.send("`This is a placeholder for help.`")
-
-@bot.command()
 async def about(ctx):
     await ctx.send("`This is a placeholder for about.`")
 
