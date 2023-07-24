@@ -3,7 +3,7 @@ import json
 import random
 # Third party imports
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from mcipc.query import Client
 import requests
 # Local application imports
@@ -46,23 +46,9 @@ async def about(ctx):
 # Will return information on the Minecraft server
 @bot.command()
 async def serverinfo(ctx):
-    def get_server_address():
-        file = open("config.json")
-        data = json.load(file)
-        return data["server-address"]   
-    def get_server_port():
-        file = open("config.json")
-        data = json.load(file)
-        return data["server-port"]
-    server_address = get_server_address()
-    server_port = get_server_port()
     async with ctx.typing():
-        try:
-            # Using the query protocol to communicate with the server through the IP and port
-            with Client(server_address, int(server_port), timeout = 10) as client:
-                full_stats = client.stats(full=True)
-            # Turning the stats into a JSON-ish dictionary
-            full_stats = dict(full_stats)
+        full_stats, online = query_server(get_server_address(), get_server_port())
+        if online:
             # Creating an embed for Discord
             embed = discord.Embed(
                 title = "Minecraft Server Info",
@@ -76,18 +62,60 @@ async def serverinfo(ctx):
                 """,
                 color = discord.Color.dark_blue()
             )
-            
             embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
             await ctx.send(embed = embed)
-        except Exception as e:
-            print(e)
+        else:
             await ctx.send("The server is offline or I am searching the wrong address :(")    
 
-# Securely loading the bot token
+@bot.command()
+async def serverstatus(ctx):
+    check_server_status.start(ctx)
+    print("Task started!")
+
+
+# Every 15 seconds the bot will query the server to see if it is online, then change nickname depending on result
+@tasks.loop(seconds=15)
+async def check_server_status(ctx):
+    await bot.wait_until_ready()
+    print("Running...")
+    full_stats, online = query_server(get_server_address(), get_server_port())
+    if online:
+        await ctx.guild.me.edit(nick="[ONLINE] MineAlertBot")
+    else:
+        await ctx.guild.me.edit(nick="[OFFLINE] MineAlertBot")
+    
+
+# Command to query the server for information, and check if the server is online
+def query_server(server_address, server_port):
+    try:
+        # Using the query protocol to communicate with the server through the IP and port
+        with Client(server_address, int(server_port), timeout = 10) as client:
+            full_stats = client.stats(full=True)
+            online = True
+        # Turning the stats into a JSON-ish dictionary
+        full_stats = dict(full_stats)
+        return full_stats, online
+    except Exception as e:
+        print(e)
+        full_stats = None
+        online = False
+        return full_stats, online
+
+# Securely loading the information from the config file
 def get_token():
     file = open("config.json")
     data = json.load(file)
     return data["token"]
+
+def get_server_address():
+    file = open("config.json")
+    data = json.load(file)
+    return data["server-address"]   
+
+def get_server_port():
+    file = open("config.json")
+    data = json.load(file)
+    return data["server-port"]
 
 # Activating the bot
 bot.run(get_token())
