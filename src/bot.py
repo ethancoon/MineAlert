@@ -78,8 +78,8 @@ async def serverstatus(ctx):
 async def check_server_status(ctx):
     await bot.wait_until_ready()
     print("Running...")
-    full_stats, online = query_server(get_server_address(), get_server_port())
-    if online:
+    full_stats, server_online = query_server(get_server_address(), get_server_port())
+    if server_online:
         await ctx.guild.me.edit(nick="[ONLINE] MineAlertBot")
     else:
         await ctx.guild.me.edit(nick="[OFFLINE] MineAlertBot")
@@ -91,15 +91,15 @@ def query_server(server_address, server_port):
         # Using the query protocol to communicate with the server through the IP and port
         with Client(server_address, int(server_port), timeout = 10) as client:
             full_stats = client.stats(full=True)
-            online = True
+            server_online = True
         # Turning the stats into a JSON-ish dictionary
         full_stats = dict(full_stats)
-        return full_stats, online
+        return full_stats, server_online
     except Exception as e:
         print(e)
         full_stats = None
-        online = False
-        return full_stats, online
+        server_online = False
+        return full_stats, server_online
 
 # Securely loading the information from the config file
 def get_token():
