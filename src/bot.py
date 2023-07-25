@@ -14,6 +14,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", description = "A simple Discord bot for a Minecraft server", intents = intents)
 
+# Config options for the bot. Location will be updated
+server_address = "ip"
+server_port = 25565
+
 # When the bot is initialized this message will be output into the terminal
 @bot.event
 async def on_ready():
@@ -47,7 +51,7 @@ async def about(ctx):
 @bot.command()
 async def serverinfo(ctx):
     async with ctx.typing():
-        full_stats, online = query_server(get_server_address(), get_server_port())
+        full_stats, online = query_server(server_address, server_port())
         if online:
             # Creating an embed for Discord
             embed = discord.Embed(
@@ -67,26 +71,38 @@ async def serverinfo(ctx):
         else:
             await ctx.send("The server is offline or I am searching the wrong address :(")    
 
+# Command to begin the task of monitoring the server
 @bot.command()
 async def serverstatus(ctx):
     check_server_status.start(ctx)
     print("Task started!")
+    await ctx.send("Checking now! This may take a few seconds...")
 
+@bot.command()
+async def setip(ctx, ip):
+    global server_address
+    server_address = str(ip).lower()
+    await ctx.send(f"The Minecraft server IP address is now {server_address}")
+
+@bot.command()
+async def setport(ctx, port):
+    global server_port
+    server_port = int(port)
+    await ctx.send(f"The Minecraft server port is now {server_port}")
 
 # Every 15 seconds the bot will query the server to see if it is online, then change nickname depending on result
 @tasks.loop(seconds=15)
 async def check_server_status(ctx):
     await bot.wait_until_ready()
     print("Running...")
-    full_stats, server_online = query_server(get_server_address(), get_server_port())
+    full_stats, server_online = query_server()
     if server_online:
         await ctx.guild.me.edit(nick="[ONLINE] MineAlertBot")
     else:
         await ctx.guild.me.edit(nick="[OFFLINE] MineAlertBot")
     
-
 # Command to query the server for information, and check if the server is online
-def query_server(server_address, server_port):
+def query_server():
     try:
         # Using the query protocol to communicate with the server through the IP and port
         with Client(server_address, int(server_port), timeout = 10) as client:
@@ -96,13 +112,14 @@ def query_server(server_address, server_port):
         full_stats = dict(full_stats)
         return full_stats, server_online
     except Exception as e:
-        print(e)
+        print(server_address, server_port)
+        print(f"This is the error message: {e}")
         full_stats = None
         server_online = False
         return full_stats, server_online
 
-# Securely loading the information from the config file
-def get_token():
+# Either using the user-given info or securely loading it from the config file
+def get_token(token = "1"):
     file = open("config.json")
     data = json.load(file)
     return data["token"]
