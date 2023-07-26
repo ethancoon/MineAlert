@@ -2,7 +2,7 @@
 import json
 import os
 import random
-import logging
+import logging, logging.handlers
 
 # Third-party imports
 import discord
@@ -76,6 +76,30 @@ async def setup(bot):
             except Exception as e:
                 print(f"ERROR: Error with loading cogs ({e})")
 
+# Logging and debugging
+# Creating logger
+logger = logging.getLogger("run_bot.py")
+logger.setLevel(logging.DEBUG)
+
+# Creating handler for logger
+handler = logging.handlers.RotatingFileHandler(
+    # The file where the log will be output
+    filename = "./logs/discord.log",
+    encoding = "utf-8",
+    # 32 MiB
+    maxBytes = 32 * 1024 * 1024,
+    # Rotating through 5 files
+    backupCount = 5
+)
+dt_format = "%Y-%m-%d %H:%M:%S"
+
+# Configuring the handler's output so it is more easily readible
+formatter = logging.Formatter("[{asctime}] [{levelname:<8}] {name}: {message}", dt_format, style = "{")
+handler.setFormatter(formatter)
+
+# Adding the handler as the logger's method of storing the logs
+logger.addHandler(handler)
+
 
 # Activating the bot
-bot.run(get_token())
+bot.run(get_token(), log_handler = None)
