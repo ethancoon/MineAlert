@@ -21,4 +21,5 @@ A Discord bot for Minecraft servers. Planned features include server uptime, pla
 - Ability to download world backups
 - Using the Minecraft console from Discord server
 - Support for multiple Minecraft servers per Discord server
+- Icons of player heads for active player list
 - Many more options for customization of bot functionality

@@ -7,6 +7,7 @@ import logging, logging.handlers
 # Third-party imports
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 # Making sure the bot has the right permissions, and then creating the bot with the specified command prefix
 intents = discord.Intents.default()
@@ -44,23 +45,12 @@ async def seed(ctx):
 async def about(ctx):
     await ctx.send("`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me: https://github.com/ethancoon`")
 
-    
 
 # Either using the user-given info or securely loading it from the config file
 def get_token():
     file = open("config.json")
     data = json.load(file)
     return data["token"]
-
-# def get_server_address():
-#     file = open("config.json")
-#     data = json.load(file)
-#     return data["server-address"]   
-
-# def get_server_port():
-#     file = open("config.json")
-#     data = json.load(file)
-#     return data["server-port"]
 
 # Function to activate cog for the bot to use
 async def setup(bot):
@@ -75,6 +65,7 @@ async def setup(bot):
                 print(f"ERROR: Extension \'{file}\' is not found")
             except Exception as e:
                 print(f"ERROR: Error with loading cogs ({e})")
+
 
 # Logging and debugging
 # Creating logger
@@ -101,5 +92,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
+# Loading the environmental variables in the .env file
+load_dotenv()
+
 # Activating the bot
-bot.run(get_token(), log_handler = None)
+bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
