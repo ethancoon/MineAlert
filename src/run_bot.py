@@ -64,21 +64,15 @@ def get_token():
 
 # Function to activate cog for the bot to use
 async def setup(bot):
-    # try:
-    #     await bot.load_extension("cogs.bot_server")
-    # except commands.ExtensionAlreadyLoaded:
-    #     pass
-    # except commands.ExtensionNotFound:
-    #     print(f"ERROR: Unable to load cog \'{i}\'")
-    # except:
-
     print(os.listdir("src/cogs"))
-    for i in os.listdir("src/cogs"):
-        if i.endswith(".py"):
-            try: await bot.load_extension(f"cogs.{i[:-3]}")
-            except commands.ExtensionAlreadyLoaded: pass
+    for file in os.listdir("src/cogs"):
+        if file.endswith(".py"):
+            try: 
+                await bot.load_extension(f"cogs.{file[:-3]}")
+            except commands.ExtensionAlreadyLoaded: 
+                print(f"ERROR: Extension \'{file}\ is already loaded")
             except commands.ExtensionNotFound:
-                print(f"ERROR: Unable to load cog \'{i}\'")
+                print(f"ERROR: Extension \'{file}\' is not found")
             except Exception as e:
                 print(f"ERROR: Error with loading cogs ({e})")
 
