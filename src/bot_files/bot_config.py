@@ -7,7 +7,7 @@ config = {
     # Modifying how the bot interacts with the Minecraft server
     "server_config": {
         # Placeholder values
-        "server_name": "Minecraft Server",
+        "server_name": None, # Should be a string when set
         "server_description": "Description",
 
         # Server version, may modify future functionality

@@ -54,7 +54,7 @@ def get_token():
 
 # Function to activate cog for the bot to use
 async def setup(bot):
-    print(os.listdir("src/cogs"))
+    # print(os.listdir("src/cogs"))
     for file in os.listdir("src/cogs"):
         if file.endswith(".py"):
             try: 

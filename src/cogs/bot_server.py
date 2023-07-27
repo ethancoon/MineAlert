@@ -48,13 +48,24 @@ class Server(commands.Cog):
         await ctx.send(f"The server's port is now {server_port}!")
 
     @commands.command()
+    async def setname(self, ctx, *server_name):
+        server_name = " ".join(server_name)
+        print(f"Server name: {server_name}")
+        update_config("server_config", "server_name", server_name)
+        await ctx.send(f"The server's name is now {server_name}!")
+
+    @commands.command()
     async def serverinfo(self, ctx):
         async with ctx.typing():
             full_stats, online = query_server()
             if online:
+                if config['server_config']['server_name'] == None:
+                    title = "Minecraft Server Info",
+                else:
+                    title = f"{config['server_config']['server_name']} Server Info"
                 # Creating an embed for Discord
                 embed = discord.Embed(
-                    title = "Minecraft Server Info",
+                    title = title,
                     description = f"""
                     IP: {full_stats['host_ip']}
                     Description: {full_stats['host_name']} 
@@ -84,7 +95,7 @@ class Server(commands.Cog):
         print("Running...")
         full_stats, server_online = query_server()
         if server_online:
-            await ctx.guild.me.edit(nick="[ONLINE] MineAlertBot")
+            await ctx.guild.me.edit(nick="[SERVER ONLINE] MineAlertBot")
         else:
-            await ctx.guild.me.edit(nick="[OFFLINE] MineAlertBot")
+            await ctx.guild.me.edit(nick="[SERVER OFFLINE] MineAlertBot")
 
