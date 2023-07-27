@@ -129,8 +129,16 @@ class Server(commands.Cog):
                 channel_id = config["server_config"]["alerts_channel_id"]
                 channel = ctx.guild.get_channel(int(channel_id))
                 decoded_siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                await channel.send(f"{decoded_siren_emoji} ALERT! Server has just gone offline!") 
+                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline!") 
             except Exception as e:
-                print(f"ERROR: check_for_alert exception: {e}")        
+                print(f"ERROR: check_for_alert exception: {e}")
+        elif self.previous_alert_check == False and current_alert_check == True:
+            try:
+                channel_id = config["server_config"]["alerts_channel_id"]
+                channel = ctx.guild.get_channel(int(channel_id))
+                checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
+                await channel.send(f"{checkmark_emoji} ALERT: Server is back online!")
+            except Exception as e:
+                print(f"ERROR: check_for_alert exception: {e}")
         self.previous_alert_check = current_alert_check
 
