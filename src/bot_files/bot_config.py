@@ -17,6 +17,10 @@ config = {
         "server_ip": "###.###.###.###",
         # The default port for a Minecraft server is typically 25565
         "server_port": "25565",
+
+
+        # Alerts channel ID 
+        "alerts_channel_id": ""
     }
 }
 
