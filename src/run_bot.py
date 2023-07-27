@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Making sure the bot has the right permissions, and then creating the bot with the specified command prefix
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", description = "A simple Discord bot for a Minecraft server", intents = intents)
+bot = commands.Bot(command_prefix="/", description = "A simple Discord bot for a Minecraft server", intents = intents)
 
 # When the bot is initialized this message will be output into the terminal
 @bot.event
