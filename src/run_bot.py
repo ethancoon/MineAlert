@@ -28,42 +28,44 @@ async def on_message(message):
     user_message = str(message.content)
     channel = str(message.channel)
 
+    logging.info(f"{username} said '{user_message}' (Channel: {channel})")
     print(f"{username} said '{user_message}' (Channel: {channel})")
     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
     await bot.process_commands(message)
 
 @bot.command()
 async def hello(ctx):
-    await ctx.send("Hey there!")
+    msg = "Hey there!"
+    await ctx.send(msg)
 
 # Randomly generates a Minecraft seed between the lowest and highest possible seed values
 @bot.command()
 async def seed(ctx):
-    await ctx.send(str(random.randint(-9223372036854775808, 9223372036854775807)))
+    seed = str(random.randint(-9223372036854775808, 9223372036854775807))
+    await ctx.send(seed)
 
 @bot.command()
 async def about(ctx):
-    await ctx.send("`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me: https://github.com/ethancoon`")
-
-
-# Either using the user-given info or securely loading it from the config file
-def get_token():
-    file = open("config.json")
-    data = json.load(file)
-    return data["token"]
+    about_msg = "`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me: https://github.com/ethancoon`"
+    await ctx.send(about_msg)
 
 # Function to activate cog for the bot to use
 async def setup(bot):
     # print(os.listdir("src/cogs"))
     for file in os.listdir("src/cogs"):
         if file.endswith(".py"):
+            logging.info(f"Attempting to load file {file}")
             try: 
+                logging.info(f"Successfully loaded file {file}")
                 await bot.load_extension(f"cogs.{file[:-3]}")
             except commands.ExtensionAlreadyLoaded: 
+                logging.warning(f"WARNING: Extension \'{file}\ is already loaded")
                 print(f"ERROR: Extension \'{file}\ is already loaded")
             except commands.ExtensionNotFound:
+                logging.warning(f"WARNING: Extension \'{file}\' is not found")
                 print(f"ERROR: Extension \'{file}\' is not found")
             except Exception as e:
+                logging.warning(f"WARNING: Error with loading cogs ({e})")
                 print(f"ERROR: Error with loading cogs ({e})")
 
 
@@ -96,4 +98,9 @@ logger.addHandler(handler)
 load_dotenv()
 
 # Activating the bot
-bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
+logger.info("Attempting to run bot...")
+try:
+    bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
+except KeyboardInterrupt:
+    logging.warning("WARNING: KeyboardInterrupt exception raised")
+    bot.logout()

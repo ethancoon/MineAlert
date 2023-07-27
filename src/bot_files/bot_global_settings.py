@@ -18,10 +18,13 @@ config = {
         # The default port for a Minecraft server is typically 25565
         "server_port": "25565",
 
-
         # Alerts channel ID 
         "alerts_channel_id": ""
-    }
+    },
+    "bot_config": {
+        "bot_name": "MineAlertBot",
+        "bot_version": "0.9.0",
+    },
 }
 
 # Updates the global config so all files maintain synchronicity

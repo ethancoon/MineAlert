@@ -7,7 +7,7 @@ from discord.ext import commands, tasks
 from mcipc.query import Client
 import requests
 # Local application imports
-from bot_files.bot_config import *
+from bot_files.bot_global_settings import *
 
 # Function to activate cog for the bot to use
 async def setup(bot):
