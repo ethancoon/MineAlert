@@ -1,6 +1,8 @@
 # Standard library imports
+import datetime
 import json
 import random
+import time
 # Third-party imports
 import discord
 from discord.ext import commands, tasks
@@ -24,12 +26,13 @@ def query_server():
         full_stats = dict(full_stats)
         return full_stats, server_online
     except Exception as e:
-        print(f"This is the error message: {e}")
+        print(f"This is the exception: {e}")
         full_stats = None
         server_online = False
         return full_stats, server_online
     
-
+def uptime(start_or_end):
+    return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
 
 
 # The cog for configuring the bot to correctly interact with the Minecraft server
@@ -37,7 +40,11 @@ def query_server():
 class Server(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.previous_alert_check = None
+        self.previous_online_check = None
+        global start_time
+        global end_time
+        start_time = time.time()
+        end_time = None
 
     @commands.command()
     async def setalertschannel(self, ctx, channel):
@@ -73,6 +80,7 @@ class Server(commands.Cog):
     @commands.command()
     async def serverinfo(self, ctx):
         async with ctx.typing():
+            
             full_stats, online = query_server()
             if online:
                 if config['server_config']['server_name'] == None:
@@ -92,6 +100,8 @@ class Server(commands.Cog):
                     """,
                     color = discord.Color.dark_blue()
                 )
+                global start_time
+                embed.set_footer(text = f"Server Uptime: {uptime(start_time)}")
                 embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
                 await ctx.send(embed = embed)
             else:
@@ -119,26 +129,32 @@ class Server(commands.Cog):
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
     async def check_for_alert(self, ctx: commands.Context):
+        global start_time
+        global end_time
         await self.bot.wait_until_ready()
         print("check_for_alert running...")
-        full_stats, current_alert_check = query_server()
-        if self.previous_alert_check == None:
-            self.previous_alert_check = current_alert_check
-        elif self.previous_alert_check == True and current_alert_check == False:
+        full_stats, current_online_check = query_server()
+        if self.previous_online_check == None:
+            self.previous_online_check = current_online_check
+        elif self.previous_online_check == True and current_online_check == False:
+            end_time = time.time()
             try:
                 channel_id = config["server_config"]["alerts_channel_id"]
                 channel = ctx.guild.get_channel(int(channel_id))
                 decoded_siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline!") 
+                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline! (Uptime: {uptime(start_time)})") 
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
-        elif self.previous_alert_check == False and current_alert_check == True:
+        elif self.previous_online_check == False and current_online_check == True:
+            start_time = time.time()
             try:
                 channel_id = config["server_config"]["alerts_channel_id"]
                 channel = ctx.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
-                await channel.send(f"{checkmark_emoji} ALERT: Server is back online!")
+                if type(end_time) != None:
+                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {uptime(end_time)})")
+                else:
+                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online!")
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
-        self.previous_alert_check = current_alert_check
-
+        self.previous_online_check = current_online_check

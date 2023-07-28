@@ -102,5 +102,5 @@ logger.info("Attempting to run bot...")
 try:
     bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
 except KeyboardInterrupt:
-    logging.warning("WARNING: KeyboardInterrupt exception raised")
     bot.logout()
+    logging.warning("WARNING: KeyboardInterrupt exception raised")
