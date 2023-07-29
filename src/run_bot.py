@@ -33,22 +33,6 @@ async def on_message(message):
     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
     await bot.process_commands(message)
 
-@bot.command()
-async def hello(ctx):
-    msg = "Hey there!"
-    await ctx.send(msg)
-
-# Randomly generates a Minecraft seed between the lowest and highest possible seed values
-@bot.command()
-async def seed(ctx):
-    seed = str(random.randint(-9223372036854775808, 9223372036854775807))
-    await ctx.send(seed)
-
-@bot.command()
-async def about(ctx):
-    about_msg = "`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me: https://github.com/ethancoon`"
-    await ctx.send(about_msg)
-
 # Function to activate cog for the bot to use
 async def setup(bot):
     # print(os.listdir("src/cogs"))
