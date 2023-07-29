@@ -44,5 +44,5 @@ class Informational(commands.Cog):
 
     @commands.command()
     async def about(self, ctx):
-        about_msg = "`This bot was originally created to help keep my friends updated on the status of our server. If you have any questions or concerns, please reach out to me through Discord (w1f1)`"
+        about_msg = "`This bot is a Minecraft server-monitoring assistant. For a full command list, use /help. If you have any questions or concerns, please reach out to me through Discord (w1f1)`"
         await ctx.send(about_msg)
