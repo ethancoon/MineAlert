@@ -1,6 +1,8 @@
 # Third-party imports
+import discord
 from discord.ext import commands
-
+from mojang import API
+import requests
 
 # This cog contains commands that provide general Minecraft information
 
@@ -11,6 +13,30 @@ async def setup(bot):
 class Informational(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def profile(self, ctx, name):
+        api = API()
+        uuid = api.get_uuid(str(name))
+        if not uuid:
+            await ctx.send(f"{name} is not a taken username")
+        else:
+            profile = api.get_profile(uuid)
+            print(profile)
+        # Creating an embed for Discord
+        embed = discord.Embed(
+            title = f"{name}'s Minecraft Profile",
+
+            color = discord.Color.green()
+        )
+        # embed.add_field(name = "UUID", value = f"`{uuid}`")
+        embed.set_image(url = f"https://api.mineatar.io/body/full/{uuid}")
+        embed.set_thumbnail(url = f"https://api.mineatar.io/face/{uuid}")
+        await ctx.send(embed = embed)
+
+
+            
+
 
     @commands.command()
     async def about(self, ctx):
