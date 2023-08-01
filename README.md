@@ -12,7 +12,8 @@ A simple Discord bot for Minecraft servers with numerous features planned.
 | /setport | Sets the port the bot will look for in order to get information on the Minecraft server (your query port and Minecraft server port should be the same!) |
 | /setalertschannel | Sets the channel the bot will send server updates in, such as when the Minecraft server goes offline or online. |
 | /serverinfo | Basic information about the server, including the number of online players, the maximum number of players, the server description, and version! |
-| /servercheck | If not already used, this command starts the monitoring of the Minecraft server, and (currently) the status will be updated in the bot's server nickname |
+| /servercheck | If not already used, this command starts the monitoring of the Minecraft server, and (currently) the status will be updated in the bot's server nickname. |
+| /profile | Will retrieve information on a specified player's username, UUID, skin, and skin variant. |
 
 ## Planned Features
 - Minecraft server uptime statistic
