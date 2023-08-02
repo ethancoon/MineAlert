@@ -6,32 +6,55 @@ import logging, logging.handlers
 
 # Third-party imports
 import discord
+from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+
+# Loading the environmental variables in the .env file
+load_dotenv()
 
 # Making sure the bot has the right permissions, and then creating the bot with the specified command prefix
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="/", description = "A simple Discord bot for a Minecraft server", intents = intents)
+# bot = commands.Bot(command_prefix="/", description = "A simple Discord bot for a Minecraft server", intents = intents)
 
-# When the bot is initialized this message will be output into the terminal
-@bot.event
-async def on_ready():
-    await bot.wait_until_ready()
-    await setup(bot)
-    print(f"Logged in as {bot.user} (ID:{bot.user.id})")
+class Client(discord.Client):
+    def __init__(self):
+        super().__init__(intents = intents)
+        self.synced = False
+        
+    async def on_ready(self):
+        await self.wait_until_ready()
+        if not self.synced:
+            await tree.sync(guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
+            self.synced = True
+        print(f"Logged in as {self.user} (ID:{self.user.id})")
+    
+client = Client()
+tree = app_commands.CommandTree(client)
+
+@tree.command(name = "test", description = "testing", guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
+async def self(interaction: discord.Interaction):
+    await interaction.response.send_message("Hello, test!")
+
+# # When the bot is initialized this message will be output into the terminal
+# @bot.event
+# async def on_ready():
+#     await bot.wait_until_ready()
+#     await setup(bot)
+#     print(f"Logged in as {bot.user} (ID:{bot.user.id})")
 
 # Whenever a user sends a message, this message will be logged in the terminal
-@bot.event
-async def on_message(message):
-    username = str(message.author)
-    user_message = str(message.content)
-    channel = str(message.channel)
+# @bot.event
+# async def on_message(message):
+#     username = str(message.author)
+#     user_message = str(message.content)
+#     channel = str(message.channel)
 
-    logging.info(f"{username} said '{user_message}' (Channel: {channel})")
-    print(f"{username} said '{user_message}' (Channel: {channel})")
-    # If this is not included, the bot will be unable to respond to a command if it is loggging the message
-    await bot.process_commands(message)
+#     logging.info(f"{username} said '{user_message}' (Channel: {channel})")
+#     print(f"{username} said '{user_message}' (Channel: {channel})")
+#     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
+#     await bot.process_commands(message)
 
 # Function to activate cog for the bot to use
 async def setup(bot):
@@ -51,7 +74,6 @@ async def setup(bot):
             except Exception as e:
                 logging.warning(f"WARNING: Error with loading cogs ({e})")
                 print(f"ERROR: Error with loading cogs ({e})")
-
 
 # Logging and debugging
 # Creating logger
@@ -77,14 +99,10 @@ handler.setFormatter(formatter)
 # Adding the handler as the logger's method of storing the logs
 logger.addHandler(handler)
 
-
-# Loading the environmental variables in the .env file
-load_dotenv()
-
 # Activating the bot
 logger.info("Attempting to run bot...")
 try:
-    bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
+    client.run(os.getenv("BOT_TOKEN"))
 except KeyboardInterrupt:
-    bot.logout()
+    client.logout()
     logging.warning("WARNING: KeyboardInterrupt exception raised")
