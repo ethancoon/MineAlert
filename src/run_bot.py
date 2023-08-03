@@ -6,7 +6,6 @@ import logging, logging.handlers
 
 # Third-party imports
 import discord
-from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -16,64 +15,48 @@ load_dotenv()
 # Making sure the bot has the right permissions, and then creating the bot with the specified command prefix
 intents = discord.Intents.default()
 intents.message_content = True
-# bot = commands.Bot(command_prefix="/", description = "A simple Discord bot for a Minecraft server", intents = intents)
 
-class Client(discord.Client):
+class MineAlertBot(commands.Bot):
     def __init__(self):
-        super().__init__(intents = intents)
-        self.synced = False
-        
+        super().__init__(
+            command_prefix = "/",
+            intents = intents,
+        )
+
+    async def setup_hook(self):
+        for file in os.listdir("src/cogs"):
+            if file.endswith(".py"):
+                logging.info(f"Attempting to load file {file}")
+                try: 
+                    logging.info(f"Successfully loaded file {file}")
+                    await self.load_extension(f"cogs.{file[:-3]}")
+                except commands.ExtensionAlreadyLoaded: 
+                    logging.warning(f"WARNING: Extension \'{file}\ is already loaded")
+                    print(f"ERROR: Extension \'{file}\ is already loaded")
+                except commands.ExtensionNotFound:
+                    logging.warning(f"WARNING: Extension \'{file}\' is not found")
+                    print(f"ERROR: Extension \'{file}\' is not found")
+                except Exception as e:
+                    logging.warning(f"WARNING: Error with loading cogs ({e})")
+                    print(f"ERROR: Error with loading cogs ({e})")        
+        await bot.tree.sync(guild = discord.Object(id = 1129903613951610881))
+
     async def on_ready(self):
-        await self.wait_until_ready()
-        if not self.synced:
-            await tree.sync(guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
-            self.synced = True
-        print(f"Logged in as {self.user} (ID:{self.user.id})")
-    
-client = Client()
-tree = app_commands.CommandTree(client)
+        # When the bot is initialized this message will be output into the terminal
+        print(f"Logged in as {bot.user} (ID:{bot.user.id})")
 
-@tree.command(name = "test", description = "testing", guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
-async def self(interaction: discord.Interaction):
-    await interaction.response.send_message("Hello, test!")
+    # Whenever a user sends a message, this message will be logged in the terminal
+    async def on_message(self, message: str):
+        username = str(message.author)
+        user_message = str(message.content)
+        channel = str(message.channel)
 
-# # When the bot is initialized this message will be output into the terminal
-# @bot.event
-# async def on_ready():
-#     await bot.wait_until_ready()
-#     await setup(bot)
-#     print(f"Logged in as {bot.user} (ID:{bot.user.id})")
+        logging.info(f"{username} said '{user_message}' (Channel: {channel})")
+        print(f"{username} said '{user_message}' (Channel: {channel})")
+        # If this is not included, the bot will be unable to respond to a command if it is loggging the message
+        await bot.process_commands(message)
 
-# Whenever a user sends a message, this message will be logged in the terminal
-# @bot.event
-# async def on_message(message):
-#     username = str(message.author)
-#     user_message = str(message.content)
-#     channel = str(message.channel)
-
-#     logging.info(f"{username} said '{user_message}' (Channel: {channel})")
-#     print(f"{username} said '{user_message}' (Channel: {channel})")
-#     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
-#     await bot.process_commands(message)
-
-# Function to activate cog for the bot to use
-async def setup(bot):
-    # print(os.listdir("src/cogs"))
-    for file in os.listdir("src/cogs"):
-        if file.endswith(".py"):
-            logging.info(f"Attempting to load file {file}")
-            try: 
-                logging.info(f"Successfully loaded file {file}")
-                await bot.load_extension(f"cogs.{file[:-3]}")
-            except commands.ExtensionAlreadyLoaded: 
-                logging.warning(f"WARNING: Extension \'{file}\ is already loaded")
-                print(f"ERROR: Extension \'{file}\ is already loaded")
-            except commands.ExtensionNotFound:
-                logging.warning(f"WARNING: Extension \'{file}\' is not found")
-                print(f"ERROR: Extension \'{file}\' is not found")
-            except Exception as e:
-                logging.warning(f"WARNING: Error with loading cogs ({e})")
-                print(f"ERROR: Error with loading cogs ({e})")
+bot = MineAlertBot()
 
 # Logging and debugging
 # Creating logger
@@ -89,7 +72,8 @@ handler = logging.handlers.RotatingFileHandler(
     maxBytes = 32 * 1024 * 1024,
     # Rotating through 5 files
     backupCount = 5
-)
+    )
+
 dt_format = "%Y-%m-%d %H:%M:%S"
 
 # Configuring the handler's output so it is more easily readible
@@ -102,7 +86,6 @@ logger.addHandler(handler)
 # Activating the bot
 logger.info("Attempting to run bot...")
 try:
-    client.run(os.getenv("BOT_TOKEN"))
+    bot.run(os.getenv("BOT_TOKEN"), log_handler = None)
 except KeyboardInterrupt:
-    client.logout()
     logging.warning("WARNING: KeyboardInterrupt exception raised")

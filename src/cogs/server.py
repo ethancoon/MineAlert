@@ -5,6 +5,7 @@ import random
 import time
 # Third-party imports
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 from mcipc.query import Client
 import requests
@@ -12,8 +13,8 @@ import requests
 from bot_files.bot_global_settings import *
 
 # Function to activate cog for the bot to use
-async def setup(bot):
-    await bot.add_cog(Server(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Server(bot), guild = discord.Object(id = 1129903613951610881))
 
 # Command to query the server for information, and check if the server is online
 def query_server():
@@ -37,14 +38,19 @@ def uptime(start_or_end):
 
 # The cog for configuring the bot to correctly interact with the Minecraft server
 # as well as which users can use which commands
-class Server(commands.Cog):
-    def __init__(self, bot):
+class Server(commands.GroupCog):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.previous_online_check = None
         global start_time
         global end_time
         start_time = time.time()
         end_time = None
+
+    @app_commands.command(name = "test_part_2", description = "test part 2: electric boogaloo")
+    async def ping(self, interaction: discord.Interaction) -> None:
+        bot_latency = round(self.bot.latency * 1000)
+        await interaction.response.send_message(f"Pong! ({bot_latency} ms)")
 
     @commands.command()
     async def setalertschannel(self, ctx, channel):
