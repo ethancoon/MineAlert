@@ -2,6 +2,7 @@
 import datetime
 import os
 import time
+from typing import Literal
 # Third-party imports
 import discord
 from discord import app_commands
@@ -30,7 +31,6 @@ def query_server():
         full_stats = dict(full_stats)
         return full_stats, server_online
     except Exception as e:
-        print(f"This is the exception: {e}")
         full_stats = None
         server_online = False
         return full_stats, server_online
@@ -65,26 +65,30 @@ class Server(commands.Cog):
             print(f"ERROR: Setalertschannel exception: {e}")
             await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
     
-    @app_commands.command(name = "setip", description = "Set the IP of the Minecraft server")
+    @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
-    async def setip(self, interaction: discord.Interaction, server_ip: str):
-        print(f"Server IP: {server_ip}")
-        update_config("server_config", "server_ip", server_ip)
-        await interaction.response.send_message(f"The server's IP is now {server_ip}!")
+    async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel"], value: str):
+        if options == "Name":
+                update_config("server_config", "server_name", value)
+                await interaction.response.send_message(f"The Minecraft server's name is now {value}!")
+        elif options == "IP":
+            update_config("server_config", "server_ip", value)
+            await interaction.response.send_message(f"The Minecraft server's IP is now {value}!")   
+        elif options == "Port":
+            update_config("server_config", "server_port", value)
+            await interaction.response.send_message(f"The Minecraft server's port is now {value}!")
+        elif options == "Alerts Channel":
+            if value[0] == "#":
+                value = value[1:]
+            try:
+                channel = discord.utils.get(interaction.guild.channels, name = str(value))
+                channel_id = channel.id
+                update_config("server_config", "alerts_channel_id", channel_id)
+                await interaction.response.send_message(f"The Minecraft server's alerts channel is now #{channel}!")
+            except Exception as e:
+                print(f"ERROR: Setalertschannel exception: {e}")
+                await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
 
-    @app_commands.command(name = "setport", description = "Set the port of the Minecraft server")
-    @app_commands.default_permissions(administrator = True)
-    async def setport(self, interaction: discord.Interaction, server_port: int):
-        print(f"Server port: {server_port}")
-        update_config("server_config", "server_port", server_port)
-        await interaction.response.send_message(f"The server's port is now {server_port}!")
-
-    @app_commands.command(name = "setname", description = "Set the name of the Minecraft server")
-    @app_commands.default_permissions(administrator = True)
-    async def setname(self, interaction: discord.Interaction, server_name: str):
-        print(f"Server name: {server_name}")
-        update_config("server_config", "server_name", server_name)
-        await interaction.response.send_message(f"The server's name is now {server_name}!")
 
     @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
     async def serverinfo(self, interaction: discord.Interaction):
@@ -141,7 +145,6 @@ class Server(commands.Cog):
         global start_time
         global end_time
         await self.bot.wait_until_ready()
-        print("check_for_alert running...")
         full_stats, current_online_check = query_server()
         if self.previous_online_check == None:
             self.previous_online_check = current_online_check
