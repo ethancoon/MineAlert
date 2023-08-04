@@ -38,8 +38,9 @@ class MineAlertBot(commands.Bot):
                     print(f"ERROR: Extension \'{file}\' is not found")
                 except Exception as e:
                     logging.warning(f"WARNING: Error with loading cogs ({e})")
-                    print(f"ERROR: Error with loading cogs ({e})")        
-        await bot.tree.sync(guild = discord.Object(id = 1129903613951610881))
+                    print(f"ERROR: Error with loading cogs ({e})")
+        # Sync the slash commands to the dev Discord server
+        await bot.tree.sync(guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
 
     async def on_ready(self):
         # When the bot is initialized this message will be output into the terminal

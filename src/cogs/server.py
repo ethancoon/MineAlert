@@ -51,6 +51,7 @@ class Server(commands.Cog):
         end_time = None
 
     @app_commands.command(name = "setalertschannel", description = "Set the channel for Minecraft server alerts")
+    @app_commands.default_permissions(administrator = True)
     async def setalertschannel(self, interaction: discord.Interaction, channel: str):
         print(f"Alerts channel: {channel}")
         if channel[0] == "#":
@@ -65,18 +66,21 @@ class Server(commands.Cog):
             await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
     
     @app_commands.command(name = "setip", description = "Set the IP of the Minecraft server")
+    @app_commands.default_permissions(administrator = True)
     async def setip(self, interaction: discord.Interaction, server_ip: str):
         print(f"Server IP: {server_ip}")
         update_config("server_config", "server_ip", server_ip)
         await interaction.response.send_message(f"The server's IP is now {server_ip}!")
 
     @app_commands.command(name = "setport", description = "Set the port of the Minecraft server")
+    @app_commands.default_permissions(administrator = True)
     async def setport(self, interaction: discord.Interaction, server_port: int):
         print(f"Server port: {server_port}")
         update_config("server_config", "server_port", server_port)
         await interaction.response.send_message(f"The server's port is now {server_port}!")
 
     @app_commands.command(name = "setname", description = "Set the name of the Minecraft server")
+    @app_commands.default_permissions(administrator = True)
     async def setname(self, interaction: discord.Interaction, server_name: str):
         print(f"Server name: {server_name}")
         update_config("server_config", "server_name", server_name)
@@ -113,6 +117,7 @@ class Server(commands.Cog):
 
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
+    @app_commands.default_permissions(administrator = True)
     async def servercheck(self, interaction: discord.Interaction):
         self.check_server_status.start(interaction)
         self.check_for_alert.start(interaction)
