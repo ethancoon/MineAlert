@@ -1,30 +1,37 @@
+# Standard library imports
+import os
 # Third-party imports
 import discord
+from discord import app_commands
 from discord.ext import commands
+from dotenv import load_dotenv
 from mojang import API
+
+# Loading the environmental variables in the .env file
+load_dotenv()
 
 # This cog contains commands that provide general Minecraft information
 
 # Function to activate cog for the bot to use
 async def setup(bot):
-    await bot.add_cog(Informational(bot))
+    await bot.add_cog(Informational(bot), guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
 
-# The class for Informational commands as defined by commands.cog
+# The class for Informational commands as defined by commands.GroupCog
 class Informational(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # The /profile command, will use the mojang API wrapper to retrieve information on Minecraft players
     # This includes username, UUID, the skin the player uses, and the skin variant, if any
-    @commands.command()
-    async def profile(self, ctx, name):
+    @app_commands.command(name = "profile", description = "View info on a Minecraft player's profile")
+    async def profile(self, interaction: discord.Interaction, name: str):
         # Initializing the API wrapper
         api = API()
         # Retrieving the UUID through the API wrapper
         uuid = api.get_uuid(str(name))
         # If the UUID does not exist, no player profile exists
         if not uuid:
-            await ctx.send(f"{name} is not a taken username")
+            await interaction.response.send_message(f"{name} is not a taken username")
         else:
             # Returns a profile object
             profile = api.get_profile(uuid)
@@ -46,10 +53,10 @@ class Informational(commands.Cog):
         embed.set_image(url = f"https://api.mineatar.io/body/full/{uuid}")
         # Same for the face
         embed.set_thumbnail(url = f"https://api.mineatar.io/face/{uuid}")
-        await ctx.send(embed = embed)
+        await interaction.response.send_message(embed = embed)
 
     # Command that gives information on this bot
-    @commands.command()
-    async def about(self, ctx):
+    @app_commands.command(name = "about", description = "Information about the bot")
+    async def about(self, interaction: discord.Interaction):
         about_msg = "`This bot is a Minecraft server-monitoring assistant. For a full command list, use /help. If you have any questions or concerns, please reach out to me through Discord (w1f1)`"
-        await ctx.send(about_msg)
+        await interaction.response.send_message(about_msg)
