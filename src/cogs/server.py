@@ -82,7 +82,7 @@ class Server(commands.Cog):
         update_config("server_config", "server_name", server_name)
         await interaction.response.send_message(f"The server's name is now {server_name}!")
 
-    @app_commands.command()
+    @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
     async def serverinfo(self, interaction: discord.Interaction):
         async with interaction.channel.typing():
             full_stats, online = query_server()
@@ -112,7 +112,7 @@ class Server(commands.Cog):
                 await interaction.response.send_message("The server is offline or I am searching the wrong address :(")
 
     # Command to begin the task of monitoring the server
-    @app_commands.command()
+    @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
     async def servercheck(self, interaction: discord.Interaction):
         self.check_server_status.start(interaction)
         self.check_for_alert.start(interaction)
