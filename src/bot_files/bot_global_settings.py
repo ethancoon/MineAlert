@@ -23,7 +23,7 @@ config = {
     },
     "bot_config": {
         "bot_name": "MineAlertBot",
-        "bot_version": "0.1.11",
+        "bot_version": "0.2.0",
     },
 }
 

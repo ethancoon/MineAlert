@@ -2,7 +2,7 @@
 import datetime
 import os
 import time
-from typing import Literal
+from typing import Literal, Optional
 # Third-party imports
 import discord
 from discord import app_commands
@@ -49,6 +49,7 @@ class Server(commands.Cog):
         global end_time
         start_time = time.time()
         end_time = None
+        self.coords = []
     
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
@@ -74,12 +75,16 @@ class Server(commands.Cog):
                 print(f"ERROR: Setalertschannel exception: {e}")
                 await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
 
-
+    # Queries the server, then returns an embed containing live info
     @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
     async def serverinfo(self, interaction: discord.Interaction):
+        # Will make it seem like the bot is typing, 
+        # which is needed to give feedback for when the bot is taking a while to query
         async with interaction.channel.typing():
             full_stats, online = query_server()
+            # If the server is online, the embed will be created, otherwise an error message
             if online:
+                # If the server has a name set, that will be used
                 if config['server_config']['server_name'] == None:
                     title = "Minecraft Server Info",
                 else:
@@ -104,6 +109,41 @@ class Server(commands.Cog):
             else:
                 await interaction.response.send_message("The server is offline or I am searching the wrong address :(")
 
+    # Sends an embed of the server's coords
+    @app_commands.command(name = "coords", description = "View any marked coordinates in the Minecraft server")
+    async def coords(self, interaction: discord.Interaction):
+        # If the server has a name set, that will be used
+        if config['server_config']['server_name'] == None:
+            title = "Minecraft Server Info"
+        else:
+            title = f"{config['server_config']['server_name']} Coords"
+        # Creating an embed for Discord
+        embed = discord.Embed(
+            title = title,
+            description = "List of coords (Y is None if left blank)",
+            color = discord.Color.dark_green()
+        )
+        embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
+        # Looping through the list of coords, and for each coord add a field.
+        for coord in self.coords:
+            coord_name = coord[0]
+            coord_pos = coord[1:]
+            # Inline means multiple coords can be on the same line
+            embed.add_field(name = f"{coord_name}", value = f"`{coord_pos}`", inline = True)
+        await interaction.response.send_message(embed = embed)
+
+    # Adding coords to the coords list
+    @app_commands.command(name = "addcoords", description = "Add coordinates to the Minecraft server's coords list")
+    # y is optional, using the typing module
+    async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int):
+        # Add the new coord to the list of coords
+        self.coords.append([name, x, y, z])
+        # If y was not used the default value would be None
+        if y != None:
+            await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
+        else:
+            await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Z = {z}")
+
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
     @app_commands.default_permissions(administrator = True)
@@ -112,17 +152,6 @@ class Server(commands.Cog):
         self.check_for_alert.start(interaction)
         print("Task started!")
         await interaction.response.send_message("Checking now! This may take a few seconds...")
-
-    # # The bot will query the server to see if it is online, then change nickname depending on result
-    # @tasks.loop(seconds = 10)
-    # async def check_server_status(self, interaction: discord.Interaction):
-    #     await self.bot.wait_until_ready()
-    #     full_stats, server_online = query_server()
-    #     if server_online:
-    #         await interaction.guild.me.edit(nick="[SERVER ONLINE] MineAlertBot")
-    #     else:
-    #         await interaction.guild.me.edit(nick="[SERVER OFFLINE] MineAlertBot")
-    #     print("check_server_status running...")
 
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
