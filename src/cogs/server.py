@@ -49,21 +49,6 @@ class Server(commands.Cog):
         global end_time
         start_time = time.time()
         end_time = None
-
-    @app_commands.command(name = "setalertschannel", description = "Set the channel for Minecraft server alerts")
-    @app_commands.default_permissions(administrator = True)
-    async def setalertschannel(self, interaction: discord.Interaction, channel: str):
-        print(f"Alerts channel: {channel}")
-        if channel[0] == "#":
-            channel = channel[1:]
-        try:
-            channel = discord.utils.get(interaction.guild.channels, name = str(channel))
-            channel_id = channel.id
-            update_config("server_config", "alerts_channel_id", channel_id)
-            await interaction.response.send_message(f"The server's alerts channel is now #{channel}!")
-        except Exception as e:
-            print(f"ERROR: Setalertschannel exception: {e}")
-            await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
     
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
@@ -123,21 +108,21 @@ class Server(commands.Cog):
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
     @app_commands.default_permissions(administrator = True)
     async def servercheck(self, interaction: discord.Interaction):
-        self.check_server_status.start(interaction)
+        # self.check_server_status.start(interaction)
         self.check_for_alert.start(interaction)
         print("Task started!")
         await interaction.response.send_message("Checking now! This may take a few seconds...")
 
-    # The bot will query the server to see if it is online, then change nickname depending on result
-    @tasks.loop(seconds = 10)
-    async def check_server_status(self, interaction: discord.Interaction):
-        await self.bot.wait_until_ready()
-        full_stats, server_online = query_server()
-        if server_online:
-            await interaction.guild.me.edit(nick="[SERVER ONLINE] MineAlertBot")
-        else:
-            await interaction.guild.me.edit(nick="[SERVER OFFLINE] MineAlertBot")
-        print("check_server_status running...")
+    # # The bot will query the server to see if it is online, then change nickname depending on result
+    # @tasks.loop(seconds = 10)
+    # async def check_server_status(self, interaction: discord.Interaction):
+    #     await self.bot.wait_until_ready()
+    #     full_stats, server_online = query_server()
+    #     if server_online:
+    #         await interaction.guild.me.edit(nick="[SERVER ONLINE] MineAlertBot")
+    #     else:
+    #         await interaction.guild.me.edit(nick="[SERVER OFFLINE] MineAlertBot")
+    #     print("check_server_status running...")
 
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
