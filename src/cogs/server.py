@@ -18,7 +18,7 @@ load_dotenv()
 
 # Function to activate cog for the bot to use
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Server(bot), guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
+    await bot.add_cog(Server(bot))
 
 # Command to query the server for information, and check if the server is online
 def query_server():

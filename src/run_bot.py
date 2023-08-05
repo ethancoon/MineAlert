@@ -14,13 +14,15 @@ load_dotenv()
 
 # Making sure the bot has the right permissions, and then creating the bot with the specified command prefix
 intents = discord.Intents.default()
-intents.message_content = True
+# Setting the bot's activity to "Playing Minecraft"
+activity = discord.Game(name = "Minecraft")
 
 class MineAlertBot(commands.Bot):
     def __init__(self):
         super().__init__(
             command_prefix = "/",
             intents = intents,
+            activity = activity
         )
 
     async def setup_hook(self):
@@ -40,22 +42,24 @@ class MineAlertBot(commands.Bot):
                     logging.warning(f"WARNING: Error with loading cogs ({e})")
                     print(f"ERROR: Error with loading cogs ({e})")
         # Sync the slash commands to the dev Discord server
-        await bot.tree.sync(guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
+        await bot.tree.sync()
 
     async def on_ready(self):
         # When the bot is initialized this message will be output into the terminal
         print(f"Logged in as {bot.user} (ID:{bot.user.id})")
 
-    # Whenever a user sends a message, this message will be logged in the terminal
-    async def on_message(self, message: str):
-        username = str(message.author)
-        user_message = str(message.content)
-        channel = str(message.channel)
+    # Note: this function is disabled for user privacy
 
-        logging.info(f"{username} said '{user_message}' (Channel: {channel})")
-        print(f"{username} said '{user_message}' (Channel: {channel})")
-        # If this is not included, the bot will be unable to respond to a command if it is loggging the message
-        await bot.process_commands(message)
+    # # Whenever a user sends a message, this message will be logged in the terminal
+    # async def on_message(self, message: str):
+    #     username = str(message.author)
+    #     user_message = str(message.content)
+    #     channel = str(message.channel)
+
+    #     logging.info(f"{username} said '{user_message}' (Channel: {channel})")
+    #     print(f"{username} said '{user_message}' (Channel: {channel})")
+    #     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
+    #     await bot.process_commands(message)
 
 bot = MineAlertBot()
 

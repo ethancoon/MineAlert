@@ -13,8 +13,8 @@ load_dotenv()
 # This cog contains commands that provide general Minecraft information
 
 # Function to activate cog for the bot to use
-async def setup(bot):
-    await bot.add_cog(Informational(bot), guild = discord.Object(id = os.getenv("DEV_DISCORD_SERVER_ID")))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Informational(bot))
 
 # The class for Informational commands as defined by commands.GroupCog
 class Informational(commands.Cog):
