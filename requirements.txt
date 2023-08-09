@@ -1,4 +1,5 @@
 discord.py==2.3.1
+mariadb==1.1.7
 mcipc==2.4.2
 mojang==1.1.0
 python-dotenv==1.0.0
