@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from mcipc.query import Client
 import os
 # Local application imports
-from bot_files.bot_global_settings import *
+from data.bot_global_settings import *
 
 # Loading the environmental variables in the .env file
 load_dotenv()

@@ -9,6 +9,9 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+# Local application imports
+from data.database import *
+
 # Loading the environmental variables in the .env file
 load_dotenv()
 
@@ -41,25 +44,17 @@ class MineAlertBot(commands.Bot):
                 except Exception as e:
                     logging.warning(f"WARNING: Error with loading cogs ({e})")
                     print(f"ERROR: Error with loading cogs ({e})")
-        # Sync the slash commands to the dev Discord server
+        # Sync the slash commands to the all Discord servers the bot is in
         await bot.tree.sync()
+
+    async def on_guild_join(self, guild: discord.Guild):
+        insert_to_db("guilds", ["guild_id", "guild_name", "num_members"], [guild.id, guild.name, guild.member_count])
+        # When the bot joins a server, this message will be output into the terminal
+        print(f"Joined {guild.name} (ID:{guild.id})")
 
     async def on_ready(self):
         # When the bot is initialized this message will be output into the terminal
         print(f"Logged in as {bot.user} (ID:{bot.user.id})")
-
-    # Note: this function is disabled for user privacy
-
-    # # Whenever a user sends a message, this message will be logged in the terminal
-    # async def on_message(self, message: str):
-    #     username = str(message.author)
-    #     user_message = str(message.content)
-    #     channel = str(message.channel)
-
-    #     logging.info(f"{username} said '{user_message}' (Channel: {channel})")
-    #     print(f"{username} said '{user_message}' (Channel: {channel})")
-    #     # If this is not included, the bot will be unable to respond to a command if it is loggging the message
-    #     await bot.process_commands(message)
 
 bot = MineAlertBot()
 
