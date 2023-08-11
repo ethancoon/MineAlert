@@ -40,7 +40,6 @@ class Informational(commands.Cog):
             username = getattr(profile, "name")
             # Get the value of the skin variant in the profile object
             skin_variant = getattr(profile, "skin_variant")
-            print(profile)
         # Creating an embed for Discord
         embed = discord.Embed(
             title = f"{username}'s Minecraft Profile",

@@ -12,6 +12,7 @@ from mcipc.query import Client
 import os
 # Local application imports
 from data.bot_global_settings import *
+from data.database import *
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -136,6 +137,9 @@ class Server(commands.Cog):
     @app_commands.command(name = "addcoords", description = "Add coordinates to the Minecraft server's coords list")
     # y is optional, using the typing module
     async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int):
+        add_coords_to_db(interaction.guild.id, [x, y, z])
+        
+        
         # Add the new coord to the list of coords
         self.coords.append([name, x, y, z])
         # If y was not used the default value would be None
