@@ -46,10 +46,8 @@ class MineAlertBot(commands.Bot):
         await bot.tree.sync()
 
     async def on_guild_join(self, guild: discord.Guild):
-        # Inserting guild general information and bot settings into the database
-        insert_to_db("guilds", ["id", "guild_name", "num_members"], [guild.id, guild.name, guild.member_count])
-        # Inserting guild information on the Minecraft server into the database
-        insert_to_db("minecraft_servers", ["guild_id"], [guild.id])
+        # Inserting guild general information into the database on guild join
+        insert_on_guild_join([guild.id, guild.name, guild.member_count])
         # When the bot joins a server, this message will be output into the terminal
         print(f"Joined {guild.name} (ID:{guild.id})")
 

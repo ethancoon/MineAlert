@@ -126,9 +126,9 @@ class Server(commands.Cog):
         )
         embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
         # Looping through the list of coords, and for each coord add a field.
-        for coord in self.coords:
+        for coord in get_coords_from_server_id(get_server_id_from_guild_id(interaction.guild.id)):
             coord_name = coord[0]
-            coord_pos = coord[1:]
+            coord_pos = coord[1:4]
             # Inline means multiple coords can be on the same line
             embed.add_field(name = f"{coord_name}", value = f"`{coord_pos}`", inline = True)
         await interaction.response.send_message(embed = embed)
@@ -137,15 +137,14 @@ class Server(commands.Cog):
     @app_commands.command(name = "addcoords", description = "Add coordinates to the Minecraft server's coords list")
     # y is optional, using the typing module
     async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int):
-        add_coords_to_db(interaction.guild.id, [x, y, z])
-        
-        
-        # Add the new coord to the list of coords
-        self.coords.append([name, x, y, z])
-        # If y was not used the default value would be None
+        # Adding the coords to the database if y != None
         if y != None:
+            add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
             await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
+        # If y == None, then y will be set to "None" and the coords will be added to the database
         else:
+            y = "None"
+            add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
             await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Z = {z}")
 
     # Command to begin the task of monitoring the server
