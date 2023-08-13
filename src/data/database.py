@@ -52,13 +52,13 @@ def get_server_id_from_guild_id(guild_id: int):
         cursor = connection.cursor()
         query = "SELECT id FROM minecraft_servers WHERE guild_id = ?"
         cursor.execute(query, [guild_id])
+        print("Executed")
         # Fetch the data from the database
         result = cursor.fetchall()
         # Close the connection
         cursor.close()
         connection.close()
-        
-        print(result[0][0])
+        print("Connection closed")
         return result[0][0]
     except mariadb.Error as e:
         print(f"get_server_id_from_guild_id failed to read data: {e}")
@@ -72,14 +72,34 @@ def get_coords_from_server_id(server_id: int):
         cursor = connection.cursor()
         query = "SELECT name, x, y, z FROM minecraft_coordinates WHERE server_id = ?"
         cursor.execute(query, [server_id])
+        print("Executed")
         # Fetch the data from the database
         result = cursor.fetchall()
         # Close the connection
         cursor.close()
         connection.close()
+        print("Connection closed")
         return result
     except mariadb.Error as e:
         print(f"get_coords_from_server_id failed to read data: {e}")
+
+
+def get_server_name_from_guild_id(guild_id: int):
+    try:
+        # Establish the connection
+        connection = mariadb.connect(**connection_parameters)
+        # If the connection is established, execute the query
+        cursor = connection.cursor()
+        query = "SELECT name FROM minecraft_servers WHERE guild_id = ?"
+        cursor.execute(query, [guild_id])
+        # Fetch the data from the database
+        result = cursor.fetchall()
+        # Close the connection
+        cursor.close()
+        connection.close()
+        return result[0][0]
+    except mariadb.Error as e:
+        print(f"get_server_name_from_guild_id failed to read data: {e}")
 
 
 def add_coords_to_db(guild_id: int, values: list):
@@ -89,7 +109,12 @@ def add_coords_to_db(guild_id: int, values: list):
         # If the connection is established, execute the query
         cursor = connection.cursor()
         server_id = get_server_id_from_guild_id(guild_id)
-        query = f"INSERT INTO minecraft_coordinates (server_id, name, x, y, z, created_by) VALUES (?, ?, ?, ?, ?, ?)"
+        if values[2] == None:
+            # Remove the y coordinate if it is None
+            values.pop(2) 
+            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, z, created_by) VALUES (?, ?, ?, ?, ?)"
+        else:
+            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, y, z, created_by) VALUES (?, ?, ?, ?, ?, ?)"
         cursor.execute(query, [server_id] + values)
         # Commit the changes to the database
         connection.commit()
@@ -101,17 +126,18 @@ def add_coords_to_db(guild_id: int, values: list):
     except mariadb.Error as e:
         print(f"add_coords_to_db failed to insert data: {e}")
 
-# Function to insert new data into the database
-def insert_to_db(table: str, columns: list, values: list):
+def delete_coords_from_db(guild_id: int):
+    pass
+
+
+def update_minecraft_server_table(guild_id = int, column = str, value = str):
     try:
         # Establish the connection
         connection = mariadb.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        columns = ", ".join(columns)
-        values_placeholder = ", ".join(["%s"] * len(values))
-        query = f"INSERT INTO {table} ({columns}) VALUES ({values_placeholder})"
-        cursor.execute(query, values)
+        query = f"UPDATE minecraft_servers SET {column} = ? WHERE guild_id = ?"
+        cursor.execute(query, [value, guild_id])
         # Commit the changes to the database
         connection.commit()
         print("Executed")
@@ -120,4 +146,5 @@ def insert_to_db(table: str, columns: list, values: list):
         connection.close()
         print("Connection closed")
     except mariadb.Error as e:
-        print(f"Failed to insert data: {e}")
+        print(f"update_minecraft_server_table failed to update data: {e}")
+    

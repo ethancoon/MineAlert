@@ -56,13 +56,13 @@ class Server(commands.Cog):
     @app_commands.default_permissions(administrator = True)
     async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel"], value: str):
         if options == "Name":
-                update_config("server_config", "server_name", value)
+                update_minecraft_server_table(interaction.guild.id, "name", value)
                 await interaction.response.send_message(f"The Minecraft server's name is now {value}!")
         elif options == "IP":
-            update_config("server_config", "server_ip", value)
+            update_minecraft_server_table(interaction.guild.id, "ip", value)
             await interaction.response.send_message(f"The Minecraft server's IP is now {value}!")   
         elif options == "Port":
-            update_config("server_config", "server_port", value)
+            update_minecraft_server_table(interaction.guild.id, "port", value)
             await interaction.response.send_message(f"The Minecraft server's port is now {value}!")
         elif options == "Alerts Channel":
             if value[0] == "#":
@@ -70,7 +70,7 @@ class Server(commands.Cog):
             try:
                 channel = discord.utils.get(interaction.guild.channels, name = str(value))
                 channel_id = channel.id
-                update_config("server_config", "alerts_channel_id", channel_id)
+                update_minecraft_server_table(interaction.guild.id, "alerts_channel_id", channel_id)
                 await interaction.response.send_message(f"The Minecraft server's alerts channel is now #{channel}!")
             except Exception as e:
                 print(f"ERROR: Setalertschannel exception: {e}")
@@ -114,10 +114,10 @@ class Server(commands.Cog):
     @app_commands.command(name = "coords", description = "View any marked coordinates in the Minecraft server")
     async def coords(self, interaction: discord.Interaction):
         # If the server has a name set, that will be used
-        if config['server_config']['server_name'] == None:
+        if get_server_name_from_guild_id(interaction.guild.id) == None:
             title = "Minecraft Server Info"
         else:
-            title = f"{config['server_config']['server_name']} Coords"
+            title = f"{get_server_name_from_guild_id(interaction.guild.id)} Coords"
         # Creating an embed for Discord
         embed = discord.Embed(
             title = title,
@@ -137,15 +137,9 @@ class Server(commands.Cog):
     @app_commands.command(name = "addcoords", description = "Add coordinates to the Minecraft server's coords list")
     # y is optional, using the typing module
     async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int):
-        # Adding the coords to the database if y != None
-        if y != None:
-            add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
-            await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
-        # If y == None, then y will be set to "None" and the coords will be added to the database
-        else:
-            y = "None"
-            add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
-            await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Z = {z}")
+        # Adding the coords to the database
+        add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
+        await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
 
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
