@@ -101,7 +101,7 @@ def get_server_name_from_guild_id(guild_id: int):
     except mariadb.Error as e:
         print(f"get_server_name_from_guild_id failed to read data: {e}")
 
-def get_minecraft_server_settings_from_guild_id(guild_id: int, column: str):
+def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
     try:
         # Establish the connection
         connection = mariadb.connect(**connection_parameters)

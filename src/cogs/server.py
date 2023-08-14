@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from mcipc.query import Client
 import os
 # Local application imports
-from data.bot_global_settings import *
 from data.database import *
 
 # Loading the environmental variables in the .env file
@@ -22,10 +21,10 @@ async def setup(bot: commands.Bot):
     await bot.add_cog(Server(bot))
 
 # Command to query the server for information, and check if the server is online
-def query_server():
+def query_server(guild_id: int):
     try:
         # Using the query protocol to communicate with the server through the IP and port
-        with Client(config["server_config"]["server_ip"], int(config["server_config"]["server_port"]), timeout = 10) as client:
+        with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
             full_stats = client.stats(full=True)
             server_online = True
         # Turning the stats into a JSON-ish dictionary
@@ -55,15 +54,16 @@ class Server(commands.Cog):
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
     async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel"], value: str):
+        await interaction.response.defer() 
         if options == "Name":
                 update_minecraft_server_table(interaction.guild.id, "name", value)
-                await interaction.response.send_message(f"The Minecraft server's name is now {value}!")
+                await interaction.followup.send(f"The Minecraft server's name is now {value}!")
         elif options == "IP":
             update_minecraft_server_table(interaction.guild.id, "ip", value)
-            await interaction.response.send_message(f"The Minecraft server's IP is now {value}!")   
+            await interaction.followup.send(f"The Minecraft server's IP is now {value}!")   
         elif options == "Port":
             update_minecraft_server_table(interaction.guild.id, "port", value)
-            await interaction.response.send_message(f"The Minecraft server's port is now {value}!")
+            await interaction.followup.send(f"The Minecraft server's port is now {value}!")
         elif options == "Alerts Channel":
             if value[0] == "#":
                 value = value[1:]
@@ -82,14 +82,14 @@ class Server(commands.Cog):
         # Will make it seem like the bot is typing, 
         # which is needed to give feedback for when the bot is taking a while to query
         async with interaction.channel.typing():
-            full_stats, online = query_server()
+            full_stats, online = query_server(interaction.guild.id)
             # If the server is online, the embed will be created, otherwise an error message
             if online:
                 # If the server has a name set, that will be used
-                if config['server_config']['server_name'] == None:
+                if get_minecraft_server_data_from_guild_id(interaction.guild.id, "name") == None:
                     title = "Minecraft Server Info",
                 else:
-                    title = f"{config['server_config']['server_name']} Server Info"
+                    title = f"{get_minecraft_server_data_from_guild_id(interaction.guild.id, 'name')} Server Info"
                 # Creating an embed for Discord
                 embed = discord.Embed(
                     title = title,
@@ -161,13 +161,13 @@ class Server(commands.Cog):
         global start_time
         global end_time
         await self.bot.wait_until_ready()
-        full_stats, current_online_check = query_server()
+        full_stats, current_online_check = query_server(interaction.guild.id)
         if self.previous_online_check == None:
             self.previous_online_check = current_online_check
         elif self.previous_online_check == True and current_online_check == False:
             end_time = time.time()
             try:
-                channel_id = config["server_config"]["alerts_channel_id"]
+                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 decoded_siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
                 await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline! (Uptime: {uptime(start_time)})") 
@@ -176,7 +176,7 @@ class Server(commands.Cog):
         elif self.previous_online_check == False and current_online_check == True:
             start_time = time.time()
             try:
-                channel_id = config["server_config"]["alerts_channel_id"]
+                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
                 if type(end_time) != None:
