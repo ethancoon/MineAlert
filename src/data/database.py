@@ -3,7 +3,7 @@ import os
 
 # Third-party imports
 from dotenv import load_dotenv
-import mariadb
+import mysql.connector as mysql
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -20,18 +20,18 @@ connection_parameters = {
 def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = "SELECT guild_id FROM guilds WHERE guild_id = ?"
+        query = "SELECT guild_id FROM guilds WHERE guild_id = %s"
         guild_info_exists = cursor.execute(query, [guild_id])
         if guild_info_exists:
-            query = "UPDATE guilds SET guild_name = ?, num_members = ? WHERE guild_id = ?"
+            query = "UPDATE guilds SET guild_name = %s, num_members = %s WHERE guild_id = %s"
             cursor.execute(query, [guild_name, num_members, guild_id])
         else:
-            query = "INSERT INTO guilds (guild_id, guild_name, num_members) VALUES (?, ?, ?)"
+            query = "INSERT INTO guilds (guild_id, guild_name, num_members) VALUES (%s, %s, %s)"
             cursor.execute(query, [guild_id, guild_name, num_members])
-            query = "INSERT INTO minecraft_servers (guild_id) VALUES (?)"
+            query = "INSERT INTO minecraft_servers (guild_id) VALUES (%s)"
             cursor.execute(query, [guild_id])
         # Commit the changes to the database
         connection.commit()
@@ -40,17 +40,17 @@ def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int):
         cursor.close()
         connection.close()
         print("Connection closed")
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"Failed to insert data: {e}")
 
 
 def get_server_id_from_guild_id(guild_id: int):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = "SELECT id FROM minecraft_servers WHERE guild_id = ?"
+        query = "SELECT id FROM minecraft_servers WHERE guild_id = %s"
         cursor.execute(query, [guild_id])
         print("Executed")
         # Fetch the data from the database
@@ -60,17 +60,17 @@ def get_server_id_from_guild_id(guild_id: int):
         connection.close()
         print("Connection closed")
         return result[0][0]
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"get_server_id_from_guild_id failed to read data: {e}")
 
 
 def get_coords_from_server_id(server_id: int):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = "SELECT name, x, y, z FROM minecraft_coordinates WHERE server_id = ?"
+        query = "SELECT name, x, y, z FROM minecraft_coordinates WHERE server_id = %s"
         cursor.execute(query, [server_id])
         print("Executed")
         # Fetch the data from the database
@@ -80,17 +80,17 @@ def get_coords_from_server_id(server_id: int):
         connection.close()
         print("Connection closed")
         return result
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"get_coords_from_server_id failed to read data: {e}")
 
 
 def get_server_name_from_guild_id(guild_id: int):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = "SELECT name FROM minecraft_servers WHERE guild_id = ?"
+        query = "SELECT name FROM minecraft_servers WHERE guild_id = %s"
         cursor.execute(query, [guild_id])
         # Fetch the data from the database
         result = cursor.fetchall()
@@ -98,16 +98,16 @@ def get_server_name_from_guild_id(guild_id: int):
         cursor.close()
         connection.close()
         return result[0][0]
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"get_server_name_from_guild_id failed to read data: {e}")
 
 def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = f"SELECT {column} FROM minecraft_servers WHERE guild_id = ?"
+        query = f"SELECT {column} FROM minecraft_servers WHERE guild_id = %s"
         cursor.execute(query, [guild_id])
         # Fetch the data from the database
         result = cursor.fetchall()
@@ -115,23 +115,23 @@ def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
         cursor.close()
         connection.close()
         return result[0][0]
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"get_minecraft_server_settings_from_guild_id failed to read data: {e}")
 
 
 def add_coords_to_db(guild_id: int, values: list):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
         server_id = get_server_id_from_guild_id(guild_id)
         if values[2] == None:
             # Remove the y coordinate if it is None
             values.pop(2) 
-            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, z, created_by) VALUES (?, ?, ?, ?, ?)"
+            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, z, created_by) VALUES (%s, %s, %s, %s, %s)"
         else:
-            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, y, z, created_by) VALUES (?, ?, ?, ?, ?, ?)"
+            query = f"INSERT INTO minecraft_coordinates (server_id, name, x, y, z, created_by) VALUES (%s, %s, %s, %s, %s, %s)"
         cursor.execute(query, [server_id] + values)
         # Commit the changes to the database
         connection.commit()
@@ -140,17 +140,17 @@ def add_coords_to_db(guild_id: int, values: list):
         cursor.close()
         connection.close()
         print("Connection closed")
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"add_coords_to_db failed to insert data: {e}")
 
 def delete_coords_from_db(guild_id: int, coords_name: str):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
         server_id = get_server_id_from_guild_id(guild_id)
-        query = f"DELETE FROM minecraft_coordinates WHERE server_id = ? AND name = ?"
+        query = f"DELETE FROM minecraft_coordinates WHERE server_id = %s AND name = %s"
         cursor.execute(query, [server_id, coords_name])
         # Commit the changes to the database
         connection.commit()
@@ -159,17 +159,17 @@ def delete_coords_from_db(guild_id: int, coords_name: str):
         cursor.close()
         connection.close()
         print("Connection closed")
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"delete_coords_from_db failed to delete data: {e}")
 
 
 def update_minecraft_server_table(guild_id = int, column = str, value = str):
     try:
         # Establish the connection
-        connection = mariadb.connect(**connection_parameters)
+        connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = f"UPDATE minecraft_servers SET {column} = ? WHERE guild_id = ?"
+        query = f"UPDATE minecraft_servers SET {column} = %s WHERE guild_id = %s"
         cursor.execute(query, [value, guild_id])
         # Commit the changes to the database
         connection.commit()
@@ -178,6 +178,6 @@ def update_minecraft_server_table(guild_id = int, column = str, value = str):
         cursor.close()
         connection.close()
         print("Connection closed")
-    except mariadb.Error as e:
+    except mysql.Error as e:
         print(f"update_minecraft_server_table failed to update data: {e}")
     
