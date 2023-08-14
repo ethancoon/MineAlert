@@ -141,9 +141,14 @@ class Server(commands.Cog):
         add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
         await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
 
+    @app_commands.command(name = "delcoords", description = "Delete coordinates from the Minecraft server's coords list")
+    async def delcoords(self, interaction: discord.Interaction, coords_name: str):
+        # Deleting the coords from the database
+        delete_coords_from_db(interaction.guild.id, coords_name)
+        await interaction.response.send_message(f"All coordinates named {coords_name} deleted!")
+
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
-    @app_commands.default_permissions(administrator = True)
     async def servercheck(self, interaction: discord.Interaction):
         # self.check_server_status.start(interaction)
         self.check_for_alert.start(interaction)

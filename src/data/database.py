@@ -101,6 +101,23 @@ def get_server_name_from_guild_id(guild_id: int):
     except mariadb.Error as e:
         print(f"get_server_name_from_guild_id failed to read data: {e}")
 
+def get_minecraft_server_settings_from_guild_id(guild_id: int, column: str):
+    try:
+        # Establish the connection
+        connection = mariadb.connect(**connection_parameters)
+        # If the connection is established, execute the query
+        cursor = connection.cursor()
+        query = f"SELECT {column} FROM minecraft_servers WHERE guild_id = ?"
+        cursor.execute(query, [guild_id])
+        # Fetch the data from the database
+        result = cursor.fetchall()
+        # Close the connection
+        cursor.close()
+        connection.close()
+        return result[0][0]
+    except mariadb.Error as e:
+        print(f"get_minecraft_server_settings_from_guild_id failed to read data: {e}")
+
 
 def add_coords_to_db(guild_id: int, values: list):
     try:
@@ -126,8 +143,24 @@ def add_coords_to_db(guild_id: int, values: list):
     except mariadb.Error as e:
         print(f"add_coords_to_db failed to insert data: {e}")
 
-def delete_coords_from_db(guild_id: int):
-    pass
+def delete_coords_from_db(guild_id: int, coords_name: str):
+    try:
+        # Establish the connection
+        connection = mariadb.connect(**connection_parameters)
+        # If the connection is established, execute the query
+        cursor = connection.cursor()
+        server_id = get_server_id_from_guild_id(guild_id)
+        query = f"DELETE FROM minecraft_coordinates WHERE server_id = ? AND name = ?"
+        cursor.execute(query, [server_id, coords_name])
+        # Commit the changes to the database
+        connection.commit()
+        print("Executed")
+        # Close the connection
+        cursor.close()
+        connection.close()
+        print("Connection closed")
+    except mariadb.Error as e:
+        print(f"delete_coords_from_db failed to delete data: {e}")
 
 
 def update_minecraft_server_table(guild_id = int, column = str, value = str):
