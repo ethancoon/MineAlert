@@ -71,10 +71,10 @@ class Server(commands.Cog):
                 channel = discord.utils.get(interaction.guild.channels, name = str(value))
                 channel_id = channel.id
                 update_minecraft_server_table(interaction.guild.id, "alerts_channel_id", channel_id)
-                await interaction.response.send_message(f"The Minecraft server's alerts channel is now #{channel}!")
+                await interaction.followup.send(f"The Minecraft server's alerts channel is now #{channel}!")
             except Exception as e:
                 print(f"ERROR: Setalertschannel exception: {e}")
-                await interaction.response.send_message("I'm having trouble finding that channel, maybe try again?")
+                await interaction.followup.send("I'm having trouble finding that channel, maybe try again?")
 
     # Queries the server, then returns an embed containing live info
     @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
@@ -89,7 +89,7 @@ class Server(commands.Cog):
                 if get_minecraft_server_data_from_guild_id(interaction.guild.id, "name") == None:
                     title = "Minecraft Server Info",
                 else:
-                    title = f"{get_minecraft_server_data_from_guild_id(interaction.guild.id, 'name')} Server Info"
+                    title = f"{get_minecraft_server_data_from_guild_id(interaction.guild.id, 'name')} Info"
                 # Creating an embed for Discord
                 embed = discord.Embed(
                     title = title,
