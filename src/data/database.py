@@ -23,13 +23,15 @@ def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int):
         connection = mysql.connect(**connection_parameters)
         # If the connection is established, execute the query
         cursor = connection.cursor()
-        query = "SELECT guild_id FROM guilds WHERE guild_id = %s"
-        guild_info_exists = cursor.execute(query, [guild_id])
+        query = "SELECT id FROM guilds WHERE id = %s"
+        cursor.execute(query, [guild_id])
+        guild_info_exists = cursor.fetchall()
+        # If the guild info exists, update the guild info, otherwise insert the guild info
         if guild_info_exists:
-            query = "UPDATE guilds SET guild_name = %s, num_members = %s WHERE guild_id = %s"
+            query = "UPDATE guilds SET guild_name = %s, num_members = %s WHERE id = %s"
             cursor.execute(query, [guild_name, num_members, guild_id])
         else:
-            query = "INSERT INTO guilds (guild_id, guild_name, num_members) VALUES (%s, %s, %s)"
+            query = "INSERT INTO guilds (id, guild_name, num_members) VALUES (%s, %s, %s)"
             cursor.execute(query, [guild_id, guild_name, num_members])
             query = "INSERT INTO minecraft_servers (guild_id) VALUES (%s)"
             cursor.execute(query, [guild_id])

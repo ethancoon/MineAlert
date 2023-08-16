@@ -49,7 +49,7 @@ class MineAlertBot(commands.Bot):
         # Inserting guild general information into the database on guild join
         insert_on_guild_join(guild.id, guild.name, guild.member_count)
         # When the bot joins a server, this message will be output into the terminal
-        print(f"Joined {guild.name} (ID:{guild.id})")
+        print(f"Joined {guild.name} with {guild.member_count} members (ID:{guild.id})")
 
     async def on_ready(self):
         # When the bot is initialized this message will be output into the terminal
