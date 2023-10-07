@@ -17,11 +17,11 @@ from data.database import *
 load_dotenv()
 
 # Function to activate cog for the bot to use
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Server(bot))
 
 # Command to query the server for information, and check if the server is online
-def query_server(guild_id: int):
+def query_server(guild_id: int) -> tuple[dict, bool]:
     try:
         # Using the query protocol to communicate with the server through the IP and port
         with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
@@ -35,14 +35,14 @@ def query_server(guild_id: int):
         server_online = False
         return full_stats, server_online
     
-def uptime(start_or_end):
+def uptime(start_or_end: int) -> str:
     return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
 
 
 # The cog for configuring the bot to correctly interact with the Minecraft server
 # as well as which users can use which commands
 class Server(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.previous_online_check = None
         global start_time
@@ -53,7 +53,7 @@ class Server(commands.Cog):
     
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
-    async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel", "Alerts Enabled"], value: str):
+    async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel", "Alerts Enabled"], value: str) -> None:
         await interaction.response.defer() 
         if options == "Name":
                 update_minecraft_server_table(interaction.guild.id, "name", value)
@@ -89,7 +89,7 @@ class Server(commands.Cog):
 
     # Queries the server, then returns an embed containing live info
     @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
-    async def serverinfo(self, interaction: discord.Interaction):
+    async def serverinfo(self, interaction: discord.Interaction) -> None:
         # Will make it seem like the bot is typing, 
         # which is needed to give feedback for when the bot is taking a while to query
         async with interaction.channel.typing():
@@ -123,7 +123,7 @@ class Server(commands.Cog):
 
     # Sends an embed of the server's coords
     @app_commands.command(name = "coords", description = "View any marked coordinates in the Minecraft server")
-    async def coords(self, interaction: discord.Interaction):
+    async def coords(self, interaction: discord.Interaction) -> None:
         # If the server has a name set, that will be used
         if get_server_name_from_guild_id(interaction.guild.id) == None:
             title = "Minecraft Server Info"
@@ -147,20 +147,20 @@ class Server(commands.Cog):
     # Adding coords to the coords list
     @app_commands.command(name = "addcoords", description = "Add coordinates to the Minecraft server's coords list")
     # y is optional, using the typing module
-    async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int):
+    async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int) -> None:
         # Adding the coords to the database
         add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
         await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
 
     @app_commands.command(name = "delcoords", description = "Delete coordinates from the Minecraft server's coords list")
-    async def delcoords(self, interaction: discord.Interaction, coords_name: str):
+    async def delcoords(self, interaction: discord.Interaction, coords_name: str) -> None:
         # Deleting the coords from the database
         delete_coords_from_db(interaction.guild.id, coords_name)
         await interaction.response.send_message(f"All coordinates named {coords_name} deleted!")
 
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
-    async def servercheck(self, interaction: discord.Interaction):
+    async def servercheck(self, interaction: discord.Interaction) -> None:
         # self.check_server_status.start(interaction)
         if get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
             await interaction.response.send_message("Alerts are disabled! Please enable them with '/set Alerts Enabled True'")
@@ -171,7 +171,7 @@ class Server(commands.Cog):
 
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
-    async def check_for_alert(self, interaction: discord.Interaction):
+    async def check_for_alert(self, interaction: discord.Interaction) -> None:
         global start_time
         global end_time
         await self.bot.wait_until_ready()

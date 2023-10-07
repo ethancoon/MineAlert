@@ -17,7 +17,7 @@ connection_parameters = {
 }
 
 # Function to insert info to the database on server join
-def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int):
+def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int) -> None:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -46,7 +46,7 @@ def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int):
         print(f"Failed to insert data: {e}")
 
 
-def get_server_id_from_guild_id(guild_id: int):
+def get_server_id_from_guild_id(guild_id: int) -> int:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -66,7 +66,7 @@ def get_server_id_from_guild_id(guild_id: int):
         print(f"get_server_id_from_guild_id failed to read data: {e}")
 
 
-def get_coords_from_server_id(server_id: int):
+def get_coords_from_server_id(server_id: int) -> list:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -86,7 +86,7 @@ def get_coords_from_server_id(server_id: int):
         print(f"get_coords_from_server_id failed to read data: {e}")
 
 
-def get_server_name_from_guild_id(guild_id: int):
+def get_server_name_from_guild_id(guild_id: int) -> str:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -103,7 +103,7 @@ def get_server_name_from_guild_id(guild_id: int):
     except mysql.Error as e:
         print(f"get_server_name_from_guild_id failed to read data: {e}")
 
-def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
+def get_minecraft_server_data_from_guild_id(guild_id: int, column: str) -> str:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -120,7 +120,7 @@ def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
     except mysql.Error as e:
         print(f"get_minecraft_server_settings_from_guild_id failed to read data: {e}")
 
-def get_alerts_enabled_from_guild_id(guild_id: int):
+def get_alerts_enabled_from_guild_id(guild_id: int) -> bool:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -137,7 +137,7 @@ def get_alerts_enabled_from_guild_id(guild_id: int):
     except mysql.Error as e:
         print(f"get_alerts_enabled_from_guild_id failed to read data: {e}")
 
-def add_coords_to_db(guild_id: int, values: list):
+def add_coords_to_db(guild_id: int, values: list) -> None:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -161,7 +161,7 @@ def add_coords_to_db(guild_id: int, values: list):
     except mysql.Error as e:
         print(f"add_coords_to_db failed to insert data: {e}")
 
-def delete_coords_from_db(guild_id: int, coords_name: str):
+def delete_coords_from_db(guild_id: int, coords_name: str) -> None:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)
@@ -181,7 +181,7 @@ def delete_coords_from_db(guild_id: int, coords_name: str):
         print(f"delete_coords_from_db failed to delete data: {e}")
 
 
-def update_minecraft_server_table(guild_id = int, column = str, value = str):
+def update_minecraft_server_table(guild_id = int, column = str, value = str) -> None:
     try:
         # Establish the connection
         connection = mysql.connect(**connection_parameters)

@@ -19,14 +19,14 @@ intents = discord.Intents.default()
 activity = discord.Game(name = "Minecraft")
 
 class MineAlertBot(commands.Bot):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             command_prefix = "/",
             intents = intents,
             activity = activity
         )
 
-    async def setup_hook(self):
+    async def setup_hook(self) -> None:
         for file in os.listdir("src/cogs"):
             if file.endswith(".py"):
                 logging.info(f"Attempting to load file {file}")
@@ -45,13 +45,13 @@ class MineAlertBot(commands.Bot):
         # Sync the slash commands to the all Discord servers the bot is in
         await bot.tree.sync()
 
-    async def on_guild_join(self, guild: discord.Guild):
+    async def on_guild_join(self, guild: discord.Guild) -> None:
         # Inserting guild general information into the database on guild join
         insert_on_guild_join(guild.id, guild.name, guild.member_count)
         # When the bot joins a server, this message will be output into the terminal
         print(f"Joined {guild.name} with {guild.member_count} members (ID:{guild.id})")
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         # When the bot is initialized this message will be output into the terminal
         print(f"Logged in as {bot.user} (ID:{bot.user.id})")
 

@@ -13,18 +13,18 @@ load_dotenv()
 # This cog contains commands that provide general Minecraft information
 
 # Function to activate cog for the bot to use
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Informational(bot))
 
 # The class for Informational commands as defined by commands.GroupCog
 class Informational(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     # The /profile command, will use the mojang API wrapper to retrieve information on Minecraft players
     # This includes username, UUID, the skin the player uses, and the skin variant, if any
     @app_commands.command(name = "profile", description = "View info on a Minecraft player's profile")
-    async def profile(self, interaction: discord.Interaction, name: str):
+    async def profile(self, interaction: discord.Interaction, name: str) -> None:
         # Initializing the API wrapper
         api = API()
         # Retrieving the UUID through the API wrapper
@@ -56,6 +56,6 @@ class Informational(commands.Cog):
 
     # Command that gives information on this bot
     @app_commands.command(name = "about", description = "Information about the bot")
-    async def about(self, interaction: discord.Interaction):
+    async def about(self, interaction: discord.Interaction) -> None:
         about_msg = "`This bot is a Minecraft server-monitoring assistant. For a full command list, use /help. If you have any questions or concerns, please reach out to me through Discord (w1f1)`"
         await interaction.response.send_message(about_msg)
