@@ -53,7 +53,7 @@ class Server(commands.Cog):
     
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
-    async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel"], value: str):
+    async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel", "Alerts Enabled"], value: str):
         await interaction.response.defer() 
         if options == "Name":
                 update_minecraft_server_table(interaction.guild.id, "name", value)
@@ -75,6 +75,17 @@ class Server(commands.Cog):
             except Exception as e:
                 print(f"ERROR: Setalertschannel exception: {e}")
                 await interaction.followup.send("I'm having trouble finding that channel, maybe try again?")
+        elif options == "Alerts Enabled":
+            if value.lower() in ["true", "yes", "on", "1"]:
+                # If the value is true, then the alerts_enabled column will be set to 1
+                update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 1)
+                self.check_for_alert.start(interaction)
+                await interaction.followup.send("Alerts are now enabled!")
+            elif value.lower() in ["false", "no", "off", "0"]:
+                # If the value is false, then the alerts_enabled column will be set to 0
+                update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
+                self.check_for_alert.stop()
+                await interaction.followup.send("Alerts are now disabled!")
 
     # Queries the server, then returns an embed containing live info
     @app_commands.command(name = "serverinfo", description = "Retrieves live information on the Minecraft server")
@@ -151,7 +162,10 @@ class Server(commands.Cog):
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
     async def servercheck(self, interaction: discord.Interaction):
         # self.check_server_status.start(interaction)
-        self.check_for_alert.start(interaction)
+        if get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
+            await interaction.response.send_message("Alerts are disabled! Please enable them with '/set Alerts Enabled True'")
+        else:
+            self.check_for_alert.start(interaction)
         print("Task started!")
         await interaction.response.send_message("Checking now! This may take a few seconds...")
 

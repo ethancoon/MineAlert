@@ -120,6 +120,22 @@ def get_minecraft_server_data_from_guild_id(guild_id: int, column: str):
     except mysql.Error as e:
         print(f"get_minecraft_server_settings_from_guild_id failed to read data: {e}")
 
+def get_alerts_enabled_from_guild_id(guild_id: int):
+    try:
+        # Establish the connection
+        connection = mysql.connect(**connection_parameters)
+        # If the connection is established, execute the query
+        cursor = connection.cursor()
+        query = "SELECT alerts_enabled FROM minecraft_servers WHERE guild_id = %s"
+        cursor.execute(query, [guild_id])
+        # Fetch the data from the database
+        result = cursor.fetchall()
+        # Close the connection
+        cursor.close()
+        connection.close()
+        return result[0][0]
+    except mysql.Error as e:
+        print(f"get_alerts_enabled_from_guild_id failed to read data: {e}")
 
 def add_coords_to_db(guild_id: int, values: list):
     try:
