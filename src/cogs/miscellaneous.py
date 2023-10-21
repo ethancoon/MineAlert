@@ -20,6 +20,7 @@ async def setup(bot: commands.Bot):
 class Miscellaneous(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self.helpers = MiscellaneousHelpers()
 
     @app_commands.command(name = "hello", description = "Says hello!")
     async def hello(self, interaction: discord.Interaction) -> None:
@@ -29,5 +30,12 @@ class Miscellaneous(commands.Cog):
     # Randomly generates a Minecraft seed between the lowest and highest possible seed values
     @app_commands.command(name = "seed", description = "Randomly generates a Minecraft seed between the lowest and highest possible seed values")
     async def seed(self, interaction: discord.Interaction) -> None:
-        seed = str(random.randint(-9223372036854775808, 9223372036854775807))
+        seed = self.helpers.generate_seed()
         await interaction.response.send_message(seed)
+
+class MiscellaneousHelpers():
+    def __init__(self) -> None:
+        pass
+
+    def generate_seed(self) -> str:
+        return str(random.randint(-9223372036854775808, 9223372036854775807))

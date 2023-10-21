@@ -20,25 +20,6 @@ load_dotenv()
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Server(bot))
 
-# Command to query the server for information, and check if the server is online
-def query_server(guild_id: int) -> tuple[dict, bool]:
-    try:
-        # Using the query protocol to communicate with the server through the IP and port
-        with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
-            full_stats = client.stats(full=True)
-            server_online = True
-        # Turning the stats into a JSON-ish dictionary
-        full_stats = dict(full_stats)
-        return full_stats, server_online
-    except Exception as e:
-        full_stats = None
-        server_online = False
-        return full_stats, server_online
-    
-def uptime(start_or_end: int) -> str:
-    return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
-
-
 # The cog for configuring the bot to correctly interact with the Minecraft server
 # as well as which users can use which commands
 class Server(commands.Cog):
@@ -50,6 +31,7 @@ class Server(commands.Cog):
         start_time = time.time()
         end_time = None
         self.coords = []
+        self.helpers = ServerHelpers()
     
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
@@ -93,7 +75,7 @@ class Server(commands.Cog):
         # Will make it seem like the bot is typing, 
         # which is needed to give feedback for when the bot is taking a while to query
         async with interaction.channel.typing():
-            full_stats, online = query_server(interaction.guild.id)
+            full_stats, online = self.helpers.query_server(interaction.guild.id)
             # If the server is online, the embed will be created, otherwise an error message
             if online:
                 # If the server has a name set, that will be used
@@ -115,7 +97,7 @@ class Server(commands.Cog):
                     color = discord.Color.dark_blue()
                 )
                 global start_time
-                embed.set_footer(text = f"Server Uptime: {uptime(start_time)}")
+                embed.set_footer(text = f"Server Uptime: {self.helpers.uptime(start_time)}")
                 embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
                 await interaction.response.send_message(embed = embed)
             else:
@@ -175,7 +157,7 @@ class Server(commands.Cog):
         global start_time
         global end_time
         await self.bot.wait_until_ready()
-        full_stats, current_online_check = query_server(interaction.guild.id)
+        full_stats, current_online_check = self.helpers.query_server(interaction.guild.id)
         if self.previous_online_check == None:
             self.previous_online_check = current_online_check
         elif self.previous_online_check == True and current_online_check == False:
@@ -184,7 +166,7 @@ class Server(commands.Cog):
                 channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 decoded_siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline! (Uptime: {uptime(start_time)})") 
+                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.helpers.uptime(start_time)})") 
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
         elif self.previous_online_check == False and current_online_check == True:
@@ -194,9 +176,33 @@ class Server(commands.Cog):
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
                 if type(end_time) != None:
-                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {uptime(end_time)})")
+                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.helpers.uptime(end_time)})")
                 else:
                     await channel.send(f"{checkmark_emoji} ALERT: Server is back online!")
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
         self.previous_online_check = current_online_check
+
+
+class ServerHelpers():
+    def __init__(self) -> None:
+        pass
+
+    # Command to query the server for information, and check if the server is online
+    def query_server(self, guild_id: int) -> tuple[dict, bool]:
+        try:
+            # Using the query protocol to communicate with the server through the IP and port
+            with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
+                full_stats = client.stats(full=True)
+                server_online = True
+            # Turning the stats into a JSON-ish dictionary
+            full_stats = dict(full_stats)
+            return full_stats, server_online
+        except Exception as e:
+            full_stats = None
+            server_online = False
+            return full_stats, server_online
+        
+    # Function to calculate the uptime of the server
+    def uptime(self, start_or_end: int) -> str:
+        return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
