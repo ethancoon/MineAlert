@@ -8,10 +8,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-from mcipc.query import Client
+from mcipc.query import Client as mcipcClient
 import os
 # Local application imports
-from data.database import *
+import data.database as db
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -36,13 +36,13 @@ class Server(commands.Cog):
     async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel", "Alerts Enabled"], value: str) -> None:
         await interaction.response.defer() 
         if options == "Name":
-                update_minecraft_server_table(interaction.guild.id, "name", value)
+                db.update_minecraft_server_table(interaction.guild.id, "name", value)
                 await interaction.followup.send(f"The Minecraft server's name is now {value}!")
         elif options == "IP":
-            update_minecraft_server_table(interaction.guild.id, "ip", value)
+            db.update_minecraft_server_table(interaction.guild.id, "ip", value)
             await interaction.followup.send(f"The Minecraft server's IP is now {value}!")   
         elif options == "Port":
-            update_minecraft_server_table(interaction.guild.id, "port", value)
+            db.update_minecraft_server_table(interaction.guild.id, "port", value)
             await interaction.followup.send(f"The Minecraft server's port is now {value}!")
         elif options == "Alerts Channel":
             if value[0] == "#":
@@ -50,7 +50,7 @@ class Server(commands.Cog):
             try:
                 channel = discord.utils.get(interaction.guild.channels, name = str(value))
                 channel_id = channel.id
-                update_minecraft_server_table(interaction.guild.id, "alerts_channel_id", channel_id)
+                db.update_minecraft_server_table(interaction.guild.id, "alerts_channel_id", channel_id)
                 await interaction.followup.send(f"The Minecraft server's alerts channel is now #{channel}!")
             except Exception as e:
                 print(f"ERROR: Setalertschannel exception: {e}")
@@ -58,12 +58,12 @@ class Server(commands.Cog):
         elif options == "Alerts Enabled":
             if value.lower() in ["true", "yes", "on", "1"]:
                 # If the value is true, then the alerts_enabled column will be set to 1
-                update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 1)
+                db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 1)
                 self.check_for_alert.start(interaction)
                 await interaction.followup.send("Alerts are now enabled!")
             elif value.lower() in ["false", "no", "off", "0"]:
                 # If the value is false, then the alerts_enabled column will be set to 0
-                update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
+                db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
                 self.check_for_alert.stop()
                 await interaction.followup.send("Alerts are now disabled!")
 
@@ -77,10 +77,10 @@ class Server(commands.Cog):
             # If the server is online, the embed will be created, otherwise an error message
             if online:
                 # If the server has a name set, that will be used
-                if get_minecraft_server_data_from_guild_id(interaction.guild.id, "name") == None:
+                if db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "name") == None:
                     title = "Minecraft Server Info",
                 else:
-                    title = f"{get_minecraft_server_data_from_guild_id(interaction.guild.id, 'name')} Info"
+                    title = f"{db.get_minecraft_server_data_from_guild_id(interaction.guild.id, 'name')} Info"
                 # Creating an embed for Discord
                 embed = discord.Embed(
                     title = title,
@@ -105,10 +105,10 @@ class Server(commands.Cog):
     @app_commands.command(name = "coords", description = "View any marked coordinates in the Minecraft server")
     async def coords(self, interaction: discord.Interaction) -> None:
         # If the server has a name set, that will be used
-        if get_server_name_from_guild_id(interaction.guild.id) == None:
+        if db.get_server_name_from_guild_id(interaction.guild.id) == None:
             title = "Minecraft Server Info"
         else:
-            title = f"{get_server_name_from_guild_id(interaction.guild.id)} Coords"
+            title = f"{db.get_server_name_from_guild_id(interaction.guild.id)} Coords"
         # Creating an embed for Discord
         embed = discord.Embed(
             title = title,
@@ -117,7 +117,7 @@ class Server(commands.Cog):
         )
         embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
         # Looping through the list of coords, and for each coord add a field.
-        for coord in get_coords_from_server_id(get_server_id_from_guild_id(interaction.guild.id)):
+        for coord in db.get_coords_from_server_id(db.get_server_id_from_guild_id(interaction.guild.id)):
             coord_name = coord[0]
             coord_pos = coord[1:4]
             # Inline means multiple coords can be on the same line
@@ -129,20 +129,20 @@ class Server(commands.Cog):
     # y is optional, using the typing module
     async def addcoords(self, interaction: discord.Interaction, name:str, x: int, y: Optional[int], *, z: int) -> None:
         # Adding the coords to the database
-        add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
+        db.add_coords_to_db(interaction.guild.id, [name, x, y, z, interaction.user.id])
         await interaction.response.send_message(f"Here are the coordinates for {name}: X = {x}, Y = {y}, Z = {z}")
 
     @app_commands.command(name = "delcoords", description = "Delete coordinates from the Minecraft server's coords list")
     async def delcoords(self, interaction: discord.Interaction, coords_name: str) -> None:
         # Deleting the coords from the database
-        delete_coords_from_db(interaction.guild.id, coords_name)
+        db.delete_coords_from_db(interaction.guild.id, coords_name)
         await interaction.response.send_message(f"All coordinates named {coords_name} deleted!")
 
     # Command to begin the task of monitoring the server
     @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
     async def servercheck(self, interaction: discord.Interaction) -> None:
         # self.check_server_status.start(interaction)
-        if get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
+        if db.get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
             await interaction.response.send_message("Alerts are disabled! Please enable them with '/set Alerts Enabled True'")
         else:
             self.notify_server_status.start(interaction)
@@ -166,7 +166,7 @@ class ServerHelpers():
     def query_server(self, guild_id: int, only_check_status: bool = False) -> tuple[dict, bool]:
         try:
             # Using the query protocol to communicate with the server through the IP and port
-            with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
+            with mcipcClient(db.get_minecraft_server_data_from_guild_id(guild_id, "ip"), db.get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
                 full_stats = client.stats(full=True)
                 server_online = True
             # Turning the stats into a JSON-ish dictionary
@@ -195,7 +195,7 @@ class ServerHelpers():
         elif previous_online_check == True and current_online_check == False:
             end_time = time.time()
             try:
-                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
+                channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
                 return channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(start_time)})"
@@ -204,7 +204,7 @@ class ServerHelpers():
         elif previous_online_check == False and current_online_check == True:
             start_time = time.time()
             try:
-                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
+                channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
                 if type(end_time) != None:

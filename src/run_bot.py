@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Local application imports
-from data.database import *
+import data.database as db
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -47,7 +47,7 @@ class MineAlertBot(commands.Bot):
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
         # Inserting guild general information into the database on guild join
-        insert_on_guild_join(guild.id, guild.name, guild.member_count)
+        db.insert_on_guild_join(guild.id, guild.name, guild.member_count)
         # When the bot joins a server, this message will be output into the terminal
         print(f"Joined {guild.name} with {guild.member_count} members (ID:{guild.id})")
 
