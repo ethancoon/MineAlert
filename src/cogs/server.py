@@ -26,10 +26,8 @@ class Server(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.previous_online_check = None
-        global start_time
-        global end_time
-        start_time = time.time()
-        end_time = None
+        self.start_time = time.time()
+        self.end_time = -1
         self.coords = []
         self.helpers = ServerHelpers()
     
@@ -147,49 +145,25 @@ class Server(commands.Cog):
         if get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
             await interaction.response.send_message("Alerts are disabled! Please enable them with '/set Alerts Enabled True'")
         else:
-            self.check_for_alert.start(interaction)
+            self.notify_server_status.start(interaction)
         print("Task started!")
         await interaction.response.send_message("Checking now! This may take a few seconds...")
 
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
-    async def check_for_alert(self, interaction: discord.Interaction) -> None:
-        global start_time
-        global end_time
+    async def notify_server_status(self, interaction: discord.Interaction) -> None:
         await self.bot.wait_until_ready()
-        full_stats, current_online_check = self.helpers.query_server(interaction.guild.id)
-        if self.previous_online_check == None:
-            self.previous_online_check = current_online_check
-        elif self.previous_online_check == True and current_online_check == False:
-            end_time = time.time()
-            try:
-                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
-                channel = interaction.guild.get_channel(int(channel_id))
-                decoded_siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                await channel.send(f"{decoded_siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.helpers.uptime(start_time)})") 
-            except Exception as e:
-                print(f"ERROR: check_for_alert exception: {e}")
-        elif self.previous_online_check == False and current_online_check == True:
-            start_time = time.time()
-            try:
-                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
-                channel = interaction.guild.get_channel(int(channel_id))
-                checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
-                if type(end_time) != None:
-                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.helpers.uptime(end_time)})")
-                else:
-                    await channel.send(f"{checkmark_emoji} ALERT: Server is back online!")
-            except Exception as e:
-                print(f"ERROR: check_for_alert exception: {e}")
-        self.previous_online_check = current_online_check
+        channel, message = self.helpers.check_for_alert(interaction, self.start_time, self.end_time, self.previous_online_check)
+        if channel != None and message != None:
+            await channel.send(message)
 
 
 class ServerHelpers():
     def __init__(self) -> None:
         pass
 
-    # Command to query the server for information, and check if the server is online
-    def query_server(self, guild_id: int) -> tuple[dict, bool]:
+    # Function to query the server for information, and/or check if the server is online
+    def query_server(self, guild_id: int, only_check_status: bool = False) -> tuple[dict, bool]:
         try:
             # Using the query protocol to communicate with the server through the IP and port
             with Client(get_minecraft_server_data_from_guild_id(guild_id, "ip"), get_minecraft_server_data_from_guild_id(guild_id, "port"), timeout = 10) as client:
@@ -197,12 +171,51 @@ class ServerHelpers():
                 server_online = True
             # Turning the stats into a JSON-ish dictionary
             full_stats = dict(full_stats)
-            return full_stats, server_online
+            if only_check_status:
+                return server_online
+            else:
+                return full_stats, server_online
         except Exception as e:
             full_stats = None
             server_online = False
-            return full_stats, server_online
+            if only_check_status:
+                return server_online
+            else:
+                return full_stats, server_online
         
     # Function to calculate the uptime of the server
-    def uptime(self, start_or_end: int) -> str:
+    def calculate_uptime_or_downtime(self, start_or_end: int) -> str:
         return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
+    
+    # Function to find if an alert message needs to be sent, and if so, what the message should be
+    def check_for_alert(self, interaction: discord.Interaction, start_time: float, end_time: float, previous_online_check: float) -> None:
+        current_online_check = self.query_server(interaction.guild.id, only_check_status = True)
+        if previous_online_check == None:
+            previous_online_check = current_online_check
+        elif previous_online_check == True and current_online_check == False:
+            end_time = time.time()
+            try:
+                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
+                channel = interaction.guild.get_channel(int(channel_id))
+                siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
+                return channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(start_time)})"
+            except Exception as e:
+                print(f"ERROR: check_for_alert exception: {e}")
+        elif previous_online_check == False and current_online_check == True:
+            start_time = time.time()
+            try:
+                channel_id = get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
+                channel = interaction.guild.get_channel(int(channel_id))
+                checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
+                if type(end_time) != None:
+                    return channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(end_time)})"
+                else:
+                    return channel, f"{checkmark_emoji} ALERT: Server is back online!"
+            except Exception as e:
+                print(f"ERROR: check_for_alert exception: {e}")
+        else:
+            return None, None
+        previous_online_check = current_online_check
+
+    def handle_setting():
+        pass
