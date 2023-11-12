@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from mcipc.query import Client as mcipcClient
 import os
 # Local application imports
-import data.database as db
+import src.data.database as db
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -59,12 +59,12 @@ class Server(commands.Cog):
             if value.lower() in ["true", "yes", "on", "1"]:
                 # If the value is true, then the alerts_enabled column will be set to 1
                 db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 1)
-                self.check_for_alert.start(interaction)
+                self.servercheck().start(interaction)
                 await interaction.followup.send("Alerts are now enabled!")
             elif value.lower() in ["false", "no", "off", "0"]:
                 # If the value is false, then the alerts_enabled column will be set to 0
                 db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
-                self.check_for_alert.stop()
+                self.servercheck().stop()
                 await interaction.followup.send("Alerts are now disabled!")
 
     # Queries the server, then returns an embed containing live info
@@ -185,10 +185,10 @@ class ServerHelpers():
         
     # Function to calculate the uptime of the server
     def calculate_uptime_or_downtime(self, start_or_end: int) -> str:
-        return str(datetime.timedelta(seconds=int(round(time.time()-start_or_end))))
+        return str(datetime.timedelta(seconds=int(time.time()-start_or_end)))
     
     # Function to find if an alert message needs to be sent, and if so, what the message should be
-    def check_for_alert(self, interaction: discord.Interaction, start_time: float, end_time: float, previous_online_check: float) -> None:
+    def check_for_alert(self, interaction: discord.Interaction, start_time: float, end_time: float, previous_online_check: bool) -> None:
         current_online_check = self.query_server(interaction.guild.id, only_check_status = True)
         if previous_online_check == None:
             previous_online_check = current_online_check
@@ -207,7 +207,7 @@ class ServerHelpers():
                 channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
-                if type(end_time) != None:
+                if end_time is not None:
                     return channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(end_time)})"
                 else:
                     return channel, f"{checkmark_emoji} ALERT: Server is back online!"
