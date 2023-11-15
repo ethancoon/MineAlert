@@ -14,9 +14,12 @@ from src.cogs.server import Server
 class TestServer(unittest.TestCase):
     def setUp(self) -> None:
         self.server = Server(commands.Bot)
+        
 
     def test_query_server(self):
-        pass
+        dev_guild_id = os.getenv("DEV_DISCORD_SERVER_ID")
+        result = self.server.helpers.query_server(dev_guild_id)
+        self.assertTrue(isinstance(result, tuple))
 
     def test_calculate_uptime_or_downtime(self):
         hour_in_seconds = 60 * 60
