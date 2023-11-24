@@ -151,10 +151,11 @@ class Server(commands.Cog):
         self.notify_server_status.cancel()
 
     def start_notify_server_status(self, interaction: discord.Interaction) -> None:
-        self.previous_online_check = None
-        self.start_time = time.time()
-        self.end_time = None
-        self.notify_server_status.start(interaction)
+        if not self.notify_server_status.is_running():
+            self.previous_online_check = None
+            self.start_time = time.time()
+            self.end_time = None
+            self.notify_server_status.start(interaction)
 
 
 class ServerHelpers():
