@@ -64,7 +64,7 @@ class Server(commands.Cog):
             elif value.lower() in ["false", "no", "off", "0"]:
                 # If the value is false, then the alerts_enabled column will be set to 0
                 db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
-                self.stop_notify_server_status(interaction)
+                self.stop_notify_server_status()
                 await interaction.followup.send("Alerts are now disabled!")
 
     # Queries the server, then returns an embed containing live info
