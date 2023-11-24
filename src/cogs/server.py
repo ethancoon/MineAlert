@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from mcipc.query import Client as mcipcClient
 import os
 # Local application imports
-import src.data.database as db
+import data.database as db
 
 # Loading the environmental variables in the .env file
 load_dotenv()
@@ -27,7 +27,7 @@ class Server(commands.Cog):
         self.bot = bot
         self.previous_online_check = None
         self.start_time = time.time()
-        self.end_time = -1
+        self.end_time = None
         self.coords = []
         self.helpers = ServerHelpers()
     
@@ -59,12 +59,12 @@ class Server(commands.Cog):
             if value.lower() in ["true", "yes", "on", "1"]:
                 # If the value is true, then the alerts_enabled column will be set to 1
                 db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 1)
-                self.servercheck().start(interaction)
+                self.start_notify_server_status(interaction)
                 await interaction.followup.send("Alerts are now enabled!")
             elif value.lower() in ["false", "no", "off", "0"]:
                 # If the value is false, then the alerts_enabled column will be set to 0
                 db.update_minecraft_server_table(interaction.guild.id, "alerts_enabled", 0)
-                self.servercheck().stop()
+                self.stop_notify_server_status(interaction)
                 await interaction.followup.send("Alerts are now disabled!")
 
     # Queries the server, then returns an embed containing live info
@@ -94,8 +94,7 @@ class Server(commands.Cog):
                     """,
                     color = discord.Color.dark_blue()
                 )
-                global start_time
-                embed.set_footer(text = f"Server Uptime: {self.helpers.uptime(start_time)}")
+                embed.set_footer(text = f"Server Uptime: {self.helpers.calculate_uptime_or_downtime(self.start_time)}")
                 embed.set_thumbnail(url="https://static.wikia.nocookie.net/minecraft/images/f/fe/GrassNew.png/revision/latest/scale-to-width-down/250?cb=20190903234415")
                 await interaction.response.send_message(embed = embed)
             else:
@@ -138,24 +137,24 @@ class Server(commands.Cog):
         db.delete_coords_from_db(interaction.guild.id, coords_name)
         await interaction.response.send_message(f"All coordinates named {coords_name} deleted!")
 
-    # Command to begin the task of monitoring the server
-    @app_commands.command(name = "servercheck", description = "Activates the background tasks that will monitor the server status")
-    async def servercheck(self, interaction: discord.Interaction) -> None:
-        # self.check_server_status.start(interaction)
-        if db.get_alerts_enabled_from_guild_id(interaction.guild.id) == 0:
-            await interaction.response.send_message("Alerts are disabled! Please enable them with '/set Alerts Enabled True'")
-        else:
-            self.notify_server_status.start(interaction)
-        print("Task started!")
-        await interaction.response.send_message("Checking now! This may take a few seconds...")
-
     # If the bot has gone from being online to offline for any reason, the bot will send an alert in the designated channel
     @tasks.loop(seconds = 10)
     async def notify_server_status(self, interaction: discord.Interaction) -> None:
         await self.bot.wait_until_ready()
-        channel, message = self.helpers.check_for_alert(interaction, self.start_time, self.end_time, self.previous_online_check)
+        end_time, current_online_check, channel, message = self.helpers.check_for_alert(interaction, self.start_time, self.end_time, self.previous_online_check)
+        self.previous_online_check = current_online_check
+        self.end_time = end_time
         if channel != None and message != None:
             await channel.send(message)
+
+    def stop_notify_server_status(self) -> None:
+        self.notify_server_status.cancel()
+
+    def start_notify_server_status(self, interaction: discord.Interaction) -> None:
+        self.previous_online_check = None
+        self.start_time = time.time()
+        self.end_time = None
+        self.notify_server_status.start(interaction)
 
 
 class ServerHelpers():
@@ -198,7 +197,7 @@ class ServerHelpers():
                 channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                return channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(start_time)})"
+                return end_time, current_online_check, channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(start_time)})"
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
         elif previous_online_check == False and current_online_check == True:
@@ -208,14 +207,12 @@ class ServerHelpers():
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
                 if end_time is not None:
-                    return channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(end_time)})"
+                    return end_time, current_online_check, channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(end_time)})"
                 else:
-                    return channel, f"{checkmark_emoji} ALERT: Server is back online!"
+                    return end_time, current_online_check, channel, f"{checkmark_emoji} ALERT: Server is back online!"
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
-        else:
-            return None, None
-        previous_online_check = current_online_check
+        return end_time, current_online_check, None, None
 
     def handle_setting():
         pass
