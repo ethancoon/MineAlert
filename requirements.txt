@@ -1,7 +1,7 @@
-discord.py==2.3.1
-mariadb==1.1.7
+discord.py==2.3.2
+mysql-connector-python==8.1.0
 mcipc==2.4.2
 mojang==1.1.0
 python-dotenv==1.0.0
-rcon-version==2.3.9
+rcon==2.4.4
 virtualenv==20.24.0
