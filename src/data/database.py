@@ -46,6 +46,26 @@ def insert_on_guild_join(guild_id: int, guild_name: str, num_members: int) -> No
         print(f"Failed to insert data: {e}")
 
 
+def get_guild_data_for_all_guilds() -> list:
+    try:
+        # Establish the connection
+        connection = mysql.connect(**connection_parameters)
+        # If the connection is established, execute the query
+        cursor = connection.cursor()
+        query = "SELECT id, guild_name FROM guilds"
+        cursor.execute(query)
+        print("Executed")
+        # Fetch the data from the database
+        result = cursor.fetchall()
+        # Close the connection
+        cursor.close()
+        connection.close()
+        print("Connection closed")
+        return result
+    except mysql.Error as e:
+        print(f"get_guild_data_for_all_guilds failed to read data: {e}")
+
+
 def get_server_id_from_guild_id(guild_id: int) -> int:
     try:
         # Establish the connection

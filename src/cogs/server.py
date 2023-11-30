@@ -2,6 +2,7 @@
 import datetime
 import os
 import time
+from unittest.mock import MagicMock
 from typing import Literal, Optional
 # Third-party imports
 import discord
@@ -24,13 +25,21 @@ async def setup(bot: commands.Bot) -> None:
 # as well as which users can use which commands
 class Server(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
+        # for guild in db.get_guild_data_for_all_guilds():
+        #     guild_id = guild[0]
+        #     # If the alerts_enabled column is set to 1, then the bot will start checking the server's status
+        #     if db.get_minecraft_server_data_from_guild_id(guild_id, "alerts_enabled") == 1:
+        #         interaction = discord.Interaction
+        #         interaction.guild.id = guild_id
+        #         interaction.channel_id = db.get_minecraft_server_data_from_guild_id(guild_id, "alerts_channel_id")
+        #         self.start_notify_server_status(interaction)
         self.bot = bot
         self.previous_online_check = None
         self.start_time = time.time()
         self.end_time = None
         self.coords = []
         self.helpers = ServerHelpers()
-    
+
     @app_commands.command(name = "set", description = "Modify the bot's config for the Minecraft server")
     @app_commands.default_permissions(administrator = True)
     async def set(self, interaction: discord.Interaction, options: Literal["Name", "IP", "Port", "Alerts Channel", "Alerts Enabled"], value: str) -> None:
@@ -153,9 +162,13 @@ class Server(commands.Cog):
 
     def start_notify_server_status(self, interaction: discord.Interaction) -> None:
         if not self.notify_server_status.is_running():
+            if db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "start_time") == -1:
+                db.update_minecraft_server_table(interaction.guild.id, "start_time", time.time())
+            db.update_minecraft_server_table(interaction.guild.id, "end_time", -1)
             self.previous_online_check = None
-            self.start_time = time.time()
-            self.end_time = None
+            self.start_time = int(db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "start_time"))
+            self.end_time = int(db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "end_time"))
+            
             self.notify_server_status.start(interaction)
 
 
@@ -193,21 +206,23 @@ class ServerHelpers():
         current_online_check = self.query_server(interaction.guild.id, only_check_status = True)
         if previous_online_check == True and current_online_check == False:
             end_time = time.time()
+            db.update_minecraft_server_table(interaction.guild.id, "end_time", end_time)
             try:
                 channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 siren_emoji = b'\xf0\x9f\x9a\xa8'.decode("utf-8")
-                return end_time, start_time, current_online_check, channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(start_time)})"
+                return end_time, start_time, current_online_check, channel, f"{siren_emoji} ALERT: Server has just gone offline! (Uptime: {self.calculate_uptime_or_downtime(db.get_minecraft_server_data_from_guild_id(interaction.guild.id, 'start_time'))})"
             except Exception as e:
                 print(f"ERROR: check_for_alert exception: {e}")
         elif previous_online_check == False and current_online_check == True:
             start_time = time.time()
+            db.update_minecraft_server_table(interaction.guild.id, "start_time", start_time)
             try:
                 channel_id = db.get_minecraft_server_data_from_guild_id(interaction.guild.id, "alerts_channel_id")
                 channel = interaction.guild.get_channel(int(channel_id))
                 checkmark_emoji = b'\xE2\x9C\x85'.decode("utf-8")
                 if end_time is not None:
-                    return end_time, start_time, current_online_check, channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(end_time)})"
+                    return end_time, start_time, current_online_check, channel, f"{checkmark_emoji} ALERT: Server is back online! (Downtime: {self.calculate_uptime_or_downtime(db.get_minecraft_server_data_from_guild_id(interaction.guild.id, 'end_time'))})"
                 else:
                     return end_time, start_time, current_online_check, channel, f"{checkmark_emoji} ALERT: Server is back online!"
             except Exception as e:

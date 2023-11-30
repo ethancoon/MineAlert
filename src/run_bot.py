@@ -1,7 +1,7 @@
 # Standard library imports
 import os
 import logging, logging.handlers
-
+import time
 # Third-party imports
 import discord
 from discord.ext import commands
@@ -42,6 +42,9 @@ class MineAlertBot(commands.Bot):
                 except Exception as e:
                     logging.warning(f"WARNING: Error with loading cogs ({e})")
                     print(f"ERROR: Error with loading cogs ({e})")
+        
+        
+
         # Sync the slash commands to the all Discord servers the bot is in
         await bot.tree.sync()
 
@@ -54,8 +57,38 @@ class MineAlertBot(commands.Bot):
     async def on_ready(self) -> None:
         # When the bot is initialized this message will be output into the terminal
         print(f"Logged in as {bot.user} (ID:{bot.user.id})")
+        for guild in self.guilds:
+            if db.get_alerts_enabled_from_guild_id(guild.id):
+                interaction = discord.Interaction
+                interaction.guild = guild
+                bot.get_cog("Server").start_notify_server_status(interaction)
+        
 
 bot = MineAlertBot()
+
+
+# # Your function to perform the alert actions for a guild
+# async def process_alerts(guild):
+#     # Implement your logic here to send alerts or perform other actions for the guild
+#     print("hi")
+    
+
+# from discord.ext import tasks
+
+# @bot.event
+# async def on_ready():
+#     print(f'Logged in as {bot.user.name}')
+#     # Start the task loop when the bot is ready
+#     check_alerts.start()
+
+# @tasks.loop(seconds=5)  # Adjust the interval as needed
+# async def check_alerts():
+#     guilds_with_alerts = db.get_guild_data_for_all_guilds()
+#     for guild in guilds_with_alerts:
+#         guild_id = guild[0]
+#         guild = bot.get_guild(guild_id)
+#         if guild:
+#             await process_alerts(guild)
 
 # Logging and debugging
 # Creating logger
